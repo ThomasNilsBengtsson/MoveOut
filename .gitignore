@@ -132,3 +132,6 @@ dist
 
 # Environment Variables
 .env
+
+# Database configuration
+config/db/eshop.json
