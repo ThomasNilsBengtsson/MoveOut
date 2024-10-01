@@ -1,0 +1,1 @@
+mysql -u doadmin -p -h moveout-do-user-17804934-0.k.db.ondigitalocean.com -P 25060 --ssl-ca=./certs/ca-certificate.crt defaultdb
