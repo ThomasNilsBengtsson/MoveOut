@@ -1,7 +1,7 @@
 {
     "host": "moveout-do-user-17804934-0.k.db.ondigitalocean.com",
     "user": "doadmin",
-    "password": "AVNS_06oLppycsmVjwiijHMv", 
+    "password": "--", 
     "database": "defaultdb",
     "port": 25060,
     "ssl": {

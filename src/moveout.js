@@ -5,7 +5,8 @@ const path = require("path");
 const bcrypt = require('bcrypt');
 
 // Load configuration from eshop.json
-const config = require("../config/db/eshop.json");
+//const config = require("../config/db/eshop.json");
+const config = require("../config/db/moveout.js");
 const hashed = require("../verifiers/hashed.js")
 
 // Check if SSL is enabled and the CA certificate is specified
