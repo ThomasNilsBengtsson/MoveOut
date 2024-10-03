@@ -8,7 +8,8 @@ const validator = require('validator');
 const verifiers = require("../verifiers/verifiers.js");
 const emailFunctions = require("../utils/email.js");
 const isAuthenticated = require('../utils/auth.js');
-
+const qrFunctions = require("../utils/generateQR.js");
+const path = require('path');
 
 
 /* router.get("/", (req, res) => {
@@ -146,11 +147,30 @@ router.post("/email-verified", async (req, res) => {
 router.get("/home", isAuthenticated, (req, res) => {
     let data = {
         title: "Home",
-        email: req.session.email
+        email: req.session.email,
+        imageUrl: null
     };
     res.render("pages/home.ejs", data);
 });
 
+
+router.post("/home", isAuthenticated, async (req, res) => {
+    let data = {
+        title: "Home",
+        email: req.session.email,
+    };
+    //res.render("pages/home.ejs", data);
+    const text = "Kitchen items";
+    const imagePath = 'public/images/label-image.png';
+    const newImage = await qrFunctions.overlayQRCodeOnImage(text, imagePath);
+    console.log("new image path", newImage);
+    const publicImagePath = '/' + path.relative('public', newImage).replace(/\\/g, '/');
+    console.log("public image path", publicImagePath);
+    data.imageUrl = publicImagePath;
+    //console.log("check check", data.imageUrl);
+    //console.log("New label");
+    res.render('pages/home.ejs', data);
+});
 
 
 router.post('/logout', (req, res) => {

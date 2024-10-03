@@ -11,6 +11,7 @@
   "description": "",
   "dependencies": {
     "bcrypt": "^5.1.1",
+    "canvas": "^2.11.2",
     "console.table": "^0.10.0",
     "crypto": "^1.0.1",
     "dotenv": "^16.4.5",
@@ -20,6 +21,8 @@
     "mysql2": "^3.11.3",
     "nodemailer": "^6.9.15",
     "promise-mysql": "^5.2.0",
+    "qrcode": "^1.5.4",
+    "uuidv4": "^6.2.13",
     "validator": "^13.12.0"
   }
 }

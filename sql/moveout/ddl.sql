@@ -20,6 +20,19 @@ CREATE TABLE register (
 );
 
 
+DROP TABLE IF EXISTS qr_code_labels;
+
+CREATE TABLE qr_code_labels (
+    label_id INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(100),
+    text_content TEXT,
+    image_path VARCHAR(255),
+    audio_path VARCHAR(255),
+    content_type ENUM('text', 'image', 'audio'), 
+    FOREIGN KEY (email) REFERENCES register(email)
+);
+
+
 
 --
 --Procedures
