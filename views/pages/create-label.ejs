@@ -1,0 +1,18 @@
+<%- include("./../partials/header.ejs") %>
+<body>
+    <h1>Create a New Label</h1>
+
+    <form action="/create-label" method="POST">
+        <label for="textContent">Initial Text Content (optional):</label>
+        <textarea name="textContent" id="textContent"></textarea>
+        <button type="submit">Create Label</button>
+    </form>
+
+
+    <% if (imageUrl) { %>
+        <!-- <h2>Your Image:</h2> -->
+        <img src="<%= imageUrl %>" alt="Label Image">
+    <% } %>
+</body>
+
+<%- include("./../partials/footer.ejs") %>

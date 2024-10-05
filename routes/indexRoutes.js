@@ -143,7 +143,7 @@ router.post("/email-verified", async (req, res) => {
 });
 
 
-
+/* 
 router.get("/home", isAuthenticated, (req, res) => {
     let data = {
         title: "Home",
@@ -159,18 +159,104 @@ router.post("/home", isAuthenticated, async (req, res) => {
         title: "Home",
         email: req.session.email,
     };
-    //res.render("pages/home.ejs", data);
-    const text = "Kitchen items";
-    const imagePath = 'public/images/label-image.png';
-    const newImage = await qrFunctions.overlayQRCodeOnImage(text, imagePath);
-    console.log("new image path", newImage);
-    const publicImagePath = '/' + path.relative('public', newImage).replace(/\\/g, '/');
-    console.log("public image path", publicImagePath);
-    data.imageUrl = publicImagePath;
-    //console.log("check check", data.imageUrl);
-    //console.log("New label");
+   
+    let userInput= {
+        textContent: null,
+        image:null,
+        audio: null
+    }
+
+    const formType = req.body.formType;
+
+    if(formType === "createLabel")
+    {
+
+        const text = "Kitchen items";
+        const imagePath = 'public/images/label-image.png';
+        const newImage = await qrFunctions.overlayQRCodeOnImage(text, imagePath);
+        
+        const publicImagePath = '/' + path.relative('public', newImage).replace(/\\/g, '/');
+        data.imageUrl = publicImagePath;
+    }
+
+    else if(formType === "addText")
+    {
+
+    userInput.textContent = req.body.f_text_content;
+    console.log("userInput",userInput);
+    await moveout.insert_info_qr_code(req.session.email, userInput);
+    }       
+    
     res.render('pages/home.ejs', data);
+}); */
+
+
+router.get("/home", isAuthenticated, (req, res) => {
+    res.render("pages/home.ejs", {
+        title: "Home",
+        email: req.session.email,
+    });
 });
+
+
+
+
+router.get("/create-label", isAuthenticated, (req, res) => {
+    let data = {
+        title: "Create label",
+        email: req.session.email,
+        imageUrl: null
+    };
+    res.render("pages/create-label.ejs", data);
+});
+
+
+router.post("/create-label", isAuthenticated, async (req, res) => {
+    let data = {
+        title: "Create label",
+        email: req.session.email
+    };
+
+
+    const email = req.session.email;
+    const textContent = req.body.textContent || null; // Initial text content, if any.
+
+    // Insert label into the database and get labelId.
+    const labelId = await moveout.insert_info_qr_code(email, textContent);
+
+
+    const imagePath = 'public/images/label-image.png';
+    const qrContent = `https://e241-2a02-1406-3b-8780-7a2f-dc2a-87d4-ba2e.ngrok-free.app/label/${labelId}`; // Content embedded in the QR code.
+    const qrImagePath = await qrFunctions.overlayQRCodeOnImage(qrContent, imagePath );
+    const publicImagePath = '/' + path.relative('public', qrImagePath).replace(/\\/g, '/');
+
+    data.imageUrl = publicImagePath;
+    // Store QR code image path and labelId in the database (if necessary).
+
+    // Redirect to the label page.
+    //res.redirect(`/label/${labelId}`);
+    res.render("pages/create-label.ejs", data);
+});
+
+
+router.get("/label/:labelId", async (req, res) => {
+    const labelId = req.params.labelId;
+
+    // Retrieve label details from the database
+    const label = await moveout.get_label_by_id(labelId);
+
+    if (!label) {
+        return res.status(404).send('Label not found.');
+    }
+
+    res.render("pages/label.ejs", {
+        title: "Label Details",
+        label: label, // Pass the label data to the template
+    });
+});
+
+
+
 
 
 router.post('/logout', (req, res) => {

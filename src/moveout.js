@@ -4,8 +4,7 @@ const fs = require("fs");
 const path = require("path");
 const bcrypt = require('bcrypt');
 
-// Load configuration from eshop.json
-//const config = require("../config/db/eshop.json");
+
 const config = require("../config/db/moveout.js");
 const hashed = require("../verifiers/hashed.js")
 
@@ -17,7 +16,7 @@ if (config.ssl && config.ssl.ca) {
 
 require("console.table");
 
-// Function to register a new user in the database
+
 async function registerUser(data, verificationToken) {
     const db = await mysql.createConnection(config);
     let sql = `CALL user_register_data(?, ?, ?)`;
@@ -120,11 +119,61 @@ async function isEmailReg(registerEmail) {
 }
 
 
+/* async function insert_info_qr_code(email, userInput)
+{
+    const db = await mysql.createConnection(config);
+    let sql = `CALL insert_to_qr_code(?, ?, ?, ?)`
+
+    let textContent = null;
+    let imagePath = null;
+    let audioPath = null;
+    console.log("async userInput :", userInput);
+    console.log("async userInput.f_text_content :", userInput.f_text_content);
+    //lägg till fler statements för imagePath och audioPath.
+    //Just nu så testar jag bara för textContent.
+    if(userInput.textContent)
+    {
+        textContent = userInput.textContent;
+    }
+
+    const [rows] = await db.query(sql, [email, textContent, imagePath, audioPath]);
+    const labelId = rows[0][0].label_id;
+    await db.end();
+
+    return labelId;
+}
+ */
+
+// moveout.js
+async function insert_info_qr_code(email, textContent) {
+    const db = await mysql.createConnection(config);
+    let sql = `CALL insert_to_qr_code(?, ?)`;
+
+    // Execute the stored procedure and get the label_id.
+    const [rows] = await db.query(sql, [email, textContent]);
+    const labelId = rows[0][0].label_id;
+    await db.end();
+
+    return labelId;
+}
+
+async function get_label_by_id(labelId) {
+    const db = await mysql.createConnection(config);
+    const sql = `SELECT * FROM qr_code_labels WHERE label_id = ?`;
+
+    const [rows] = await db.query(sql, [labelId]);
+    await db.end();
+
+    return rows[0];
+}
+
 
 module.exports = {
     "registerUser": registerUser,
     userVerificationByToken,
     userLogIn,
     isEmailVerified,
-    isEmailReg
+    isEmailReg,
+    insert_info_qr_code,
+    get_label_by_id
 };

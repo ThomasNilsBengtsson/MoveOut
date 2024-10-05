@@ -9,6 +9,7 @@ CREATE TABLE register
     email VARCHAR(100) PRIMARY KEY NOT NULL,
     user_password VARCHAR(100)
 ); */
+DROP TABLE IF EXISTS qr_code_labels;
 DROP TABLE IF EXISTS register;
 
 CREATE TABLE register (
@@ -20,7 +21,6 @@ CREATE TABLE register (
 );
 
 
-DROP TABLE IF EXISTS qr_code_labels;
 
 CREATE TABLE qr_code_labels (
     label_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -37,6 +37,61 @@ CREATE TABLE qr_code_labels (
 --
 --Procedures
 --
+
+DROP PROCEDURE IF EXISTS insert_to_qr_code;
+DELIMITER ;;
+CREATE PROCEDURE insert_to_qr_code(
+    IN f_email VARCHAR(100),
+    IN f_text_content TEXT
+)
+BEGIN
+    INSERT INTO qr_code_labels (email, text_content, content_type)
+    VALUES (f_email, f_text_content, 'text');
+
+    SELECT LAST_INSERT_ID() AS label_id;
+END ;;
+DELIMITER ;
+
+
+
+/* 
+DROP PROCEDURE IF EXISTS insert_to_qr_code;
+DELIMITER ;;
+
+CREATE PROCEDURE insert_to_qr_code(
+    IN f_email VARCHAR(100),
+    IN f_text_content TEXT,
+    IN f_image_path VARCHAR(255),
+    IN f_audio_path VARCHAR(255)
+)
+BEGIN
+    DECLARE v_content_type ENUM('text', 'image', 'audio');
+
+    IF NOT EXISTS (SELECT 1 FROM register WHERE email = f_email) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Email not registered.';
+    END IF;
+
+    IF f_text_content IS NOT NULL AND f_text_content != '' THEN
+        SET v_content_type = 'text';
+    ELSEIF f_image_path IS NOT NULL AND f_image_path != '' THEN
+        SET v_content_type = 'image';
+    ELSEIF f_audio_path IS NOT NULL AND f_audio_path != '' THEN
+        SET v_content_type = 'audio';
+    ELSE
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'No content provided.';
+    END IF;
+
+    INSERT INTO qr_code_labels (email, text_content, image_path, audio_path, content_type)
+    VALUES (f_email, f_text_content, f_image_path, f_audio_path, v_content_type);
+
+    SELECT LAST_INSERT_ID() AS label_id;
+END;;
+
+DELIMITER ;
+ */
+
+
+
 DROP PROCEDURE IF EXISTS check_email_exists;
 DELIMITER ;;
 
