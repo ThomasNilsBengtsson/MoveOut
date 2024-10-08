@@ -1,10 +1,20 @@
 <%- include("./../partials/header.ejs") %>
 <body>
     <h1>Label Details</h1>
+    <% if(label.text_content) { %>
+        <h2><%= label.text_content || 'No text content yet.' %></h2>
+    <% } %>
+    
+    <% if(label.image_path) { %>
+        <h1>Your Image</h1>
+        <img src="<%= label.image_path %>" alt="User image" style="max-width: 100%;">
+    <% } %>
 
- 
-
-    <h2><%= label.text_content || 'No text content yet.' %></h2>
-
+    <% if(label.audio_path) { %>
+        <h1>Audio</h1>
+        <audio controls>
+            <source src="<%= label.audio_path %>" type="audio/mpeg">
+        </audio>
+    <% } %>
 </body>
 <%- include("./../partials/footer.ejs") %>

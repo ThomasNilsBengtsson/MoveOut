@@ -19,16 +19,6 @@ function validatePassword(password) {
 }
 
 
-/* function ifEmailReg(registerEmail, databaseEmail)
-{
-    const errors = {};
-    if(registerEmail == databaseEmail)
-    {
-        errors.ifEmailReg = 'Email is already registered';
-    }
-    return errors;
-} */
-
 
 function verificationTokenCreation()
 {

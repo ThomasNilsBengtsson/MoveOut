@@ -10,14 +10,45 @@ const emailFunctions = require("../utils/email.js");
 const isAuthenticated = require('../utils/auth.js');
 const qrFunctions = require("../utils/generateQR.js");
 const path = require('path');
+const multer = require('multer');
+const fs = require('fs');
 
 
-/* router.get("/", (req, res) => {
-    let data = {};
+const storage = multer.diskStorage({
+    destination: function(req, file, cb) {
+        if(file.fieldname === "imageContent")
+        {
+            cb(null, 'public/uploads/images'); 
+        } 
+        else if(file.fieldname === "audioContent")
+        {
+            cb(null, 'public/uploads/audio');
+        }
+        else {
+            cb(new Error('Invalid field name.'), false);
+        }
+    },
+    filename: function(req, file, cb) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, uniqueSuffix + path.extname(file.originalname));
+    }
+});
 
-    data.title = "Välkommen | Eshop";
-    res.render("pages/login.ejs", data);
-}); */
+const upload = multer({
+    storage: storage,
+    fileFilter: function(req, file, cb) {
+        if (file.fieldname === 'imageContent' && file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else if (file.fieldname === 'audioContent' && file.mimetype.startsWith('audio/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Invalid file type or field name.'), false);
+        }
+    }
+});
+
+
+
 
 router.get("/login", (req, res) => {
     let data = {
@@ -25,7 +56,7 @@ router.get("/login", (req, res) => {
         title: "Login"
     };
 
-    //data.title = "Välkommen | Eshop";
+
     res.render("pages/login.ejs", data);
 });
 
@@ -34,7 +65,6 @@ router.post("/login", async (req, res) => {
         error: {},
         title: "Login"
     };
-    //data.title = "Login";
 
     const email = req.body.f_email;
     const password = req.body.f_user_password;
@@ -67,7 +97,7 @@ router.get("/register", (req, res) => {
 });
 
 
-//regrestring account submit
+
 router.post("/register", async (req, res) => {
 
     const email = req.body.f_email;
@@ -76,8 +106,7 @@ router.post("/register", async (req, res) => {
     const errorEmail = verify.validateEmail(email);
     const errorPassword = verify.validatePassword(password);
     const isEmailreg = await moveout.isEmailReg(email);
-    //const ifEmailAlreadyReg = verify.ifEmailReg(email);
-
+   
     const verificationToken = verify.verificationTokenCreation();
 
     if(Object.keys(errorEmail).length > 0)
@@ -143,15 +172,6 @@ router.post("/email-verified", async (req, res) => {
 });
 
 
-/* 
-router.get("/home", isAuthenticated, (req, res) => {
-    let data = {
-        title: "Home",
-        email: req.session.email,
-        imageUrl: null
-    };
-    res.render("pages/home.ejs", data);
-});
 
 
 router.post("/home", isAuthenticated, async (req, res) => {
@@ -188,16 +208,31 @@ router.post("/home", isAuthenticated, async (req, res) => {
     }       
     
     res.render('pages/home.ejs', data);
-}); */
+});
 
 
 router.get("/home", isAuthenticated, (req, res) => {
-    res.render("pages/home.ejs", {
-        title: "Home",
-        email: req.session.email,
+
+    const directoryPath = path.join(__dirname, '../public/images');
+    
+    fs.readdir(directoryPath, (err, files) => {
+        if (err) {
+            console.error('Unable to scan directory:', err);
+            return res.status(500).send('Unable to display images.');
+        }
+
+        // Filter image files (assuming images are in .png, .jpg, etc.)
+        const imageFiles = files.filter(file => {
+            return file.endsWith('.png') || file.endsWith('.jpg') || file.endsWith('.jpeg');
+        });
+
+        res.render('pages/home.ejs', {
+            title: 'Home',
+            email: req.session.email,
+            images: imageFiles
+        });
     });
 });
-
 
 
 
@@ -211,51 +246,117 @@ router.get("/create-label", isAuthenticated, (req, res) => {
 });
 
 
-router.post("/create-label", isAuthenticated, async (req, res) => {
+router.post('/create-label', isAuthenticated, upload.fields([
+    { name: 'imageContent', maxCount: 1 },
+    { name: 'audioContent', maxCount: 1 }
+]), async (req, res) => {
+
     let data = {
         title: "Create label",
         email: req.session.email
     };
 
-
+    console.log("creating label");
     const email = req.session.email;
-    const textContent = req.body.textContent || null; // Initial text content, if any.
+    const contentType = req.body.contentType; 
 
-    // Insert label into the database and get labelId.
-    const labelId = await moveout.insert_info_qr_code(email, textContent);
+    let textContent = null;
+    let userImagePath = null;
+    let userAudioPath = null;
+
+    if(contentType === "text"){
+        textContent = req.body.textContent;
+    } 
+    else if (contentType === "image"){
+        userImagePath = "/uploads/images/" + req.files.imageContent[0].filename;
+    }
+    else if(contentType === "audio"){
+        userAudioPath = "/uploads/audio/" + req.files.audioContent[0].filename;
+    }
+
+    const labelId = await moveout.insert_info_qr_code(email, textContent, userImagePath, userAudioPath);
 
 
     const imagePath = 'public/images/label-image.png';
-    const qrContent = `https://e241-2a02-1406-3b-8780-7a2f-dc2a-87d4-ba2e.ngrok-free.app/label/${labelId}`; // Content embedded in the QR code.
+    const qrContent = `https://04eb-2001-6b0-2a-c280-bdc1-f512-44f2-213.ngrok-free.app/label/${labelId}?email=${encodeURIComponent(email)}`; 
     const qrImagePath = await qrFunctions.overlayQRCodeOnImage(qrContent, imagePath );
     const publicImagePath = '/' + path.relative('public', qrImagePath).replace(/\\/g, '/');
 
     data.imageUrl = publicImagePath;
-    // Store QR code image path and labelId in the database (if necessary).
 
-    // Redirect to the label page.
-    //res.redirect(`/label/${labelId}`);
     res.render("pages/create-label.ejs", data);
 });
 
 
 router.get("/label/:labelId", async (req, res) => {
     const labelId = req.params.labelId;
+    const email = req.query.email;
 
-    // Retrieve label details from the database
     const label = await moveout.get_label_by_id(labelId);
 
-    if (!label) {
-        return res.status(404).send('Label not found.');
+
+    if(!label.is_user_verified)
+    {
+        let verficationCode = label.verification_code;
+        if(!verficationCode)
+        {
+            const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+            await moveout.insert_verification_code_label(labelId, verificationCode);
+            await emailFunctions.sendVerificationCodeLabel(email, verificationCode);
+            
+        }
+        return res.redirect(`/verification-code-label?labelId=${labelId}&email=${encodeURIComponent(email)}`);
+    }
+    
+
+
+    return res.render("pages/label.ejs", {
+        title: "Label Details",
+        label: label
+    }); 
+  
+});
+
+
+router.get("/verification-code-label", async (req, res) => {
+    console.log("label verification");
+    const labelId = req.query.labelId;
+    const email = req.query.email;
+
+    console.log("get verifcation doe email: ", email);
+    if (!labelId || !email) {
+        return res.status(400).send('Label ID and email are required.');
     }
 
-    res.render("pages/label.ejs", {
-        title: "Label Details",
-        label: label, // Pass the label data to the template
+   
+    res.render("pages/verification-code-label.ejs", {
+        title: "Verify Label",
+        labelId: labelId,
+        email: email
     });
 });
 
 
+router.post("/verification-code-label", async (req, res) => {
+
+    const labelId = req.body.labelId;
+    const email = req.body.email;
+    const verificationCode = req.body.verificationCode;
+    const isValid = await moveout.is_user_label_code_verified(labelId, verificationCode);
+
+    if (isValid) {
+        await moveout.markLabelAsVerified(labelId);
+        res.redirect(`/label/${labelId}?email=${encodeURIComponent(email)}`);
+    } else {
+        res.render("pages/verification-code-label.ejs", {
+            title: "Verify Label",
+            labelId: labelId,
+            email: email,
+            error: "Invalid verification code. Please try again."
+        });
+    }
+
+});
 
 
 
@@ -263,7 +364,7 @@ router.post('/logout', (req, res) => {
     req.session.destroy(err => {
         if (err) {
             console.error('Error destroying session:', err);
-            // Handle the error accordingly
+
         }
         res.redirect('/login');
     });

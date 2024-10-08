@@ -4,10 +4,10 @@ const nodemailer = require('nodemailer');
 
 async function sendVerificationEmail(userEmail, verificationLink) {
   const transporter = nodemailer.createTransport({
-    service: "Gmail", // e.g., Gmail, Outlook, or custom SMTP
+    service: "Gmail", 
     auth: {
-      user: process.env.EMAIL_USER, // Your application's email address
-      pass: process.env.EMAIL_PASS, // Your email password
+      user: process.env.EMAIL_USER, 
+      pass: process.env.EMAIL_PASS, 
     },
   });
 
@@ -28,10 +28,10 @@ async function sendVerificationEmail(userEmail, verificationLink) {
 
 async function accountCreationConfirmation(userEmail) {
   const transporter = nodemailer.createTransport({
-    service: "Gmail", // e.g., Gmail, Outlook, or custom SMTP
+    service: "Gmail", 
     auth: {
-      user: process.env.EMAIL_USER, // Your application's email address
-      pass: process.env.EMAIL_PASS, // Your email password
+      user: process.env.EMAIL_USER, 
+      pass: process.env.EMAIL_PASS, 
     },
   });
 
@@ -47,8 +47,30 @@ async function accountCreationConfirmation(userEmail) {
 }
 
 
+
+async function sendVerificationCodeLabel(userEmail, verificationCode) {
+  const transporter = nodemailer.createTransport({
+    service: "Gmail", 
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+  });
+
+  const mailOptions = {
+    from: `"MoveOut" <${process.env.EMAIL_USER}>`,
+    to: userEmail,
+    subject: 'Verification code label',
+    html: ` <p>Your verification code to access you label: ${verificationCode}</p>
+    `,
+  };
+
+  await transporter.sendMail(mailOptions);
+}
+
 module.exports = 
 { 
     sendVerificationEmail,
-    accountCreationConfirmation
+    accountCreationConfirmation,
+    sendVerificationCodeLabel
 };

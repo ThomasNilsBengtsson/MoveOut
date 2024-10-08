@@ -8,9 +8,9 @@ const bcrypt = require('bcrypt');
 const config = require("../config/db/moveout.js");
 const hashed = require("../verifiers/hashed.js")
 
-// Check if SSL is enabled and the CA certificate is specified
+
 if (config.ssl && config.ssl.ca) {
-    // Resolve the correct path to the CA certificate and read its content
+
     config.ssl.ca = fs.readFileSync(path.join(__dirname, '../', config.ssl.ca));
 }
 
@@ -38,12 +38,10 @@ async function userVerificationByToken(verificationToken)
 
 async function userLogIn(email, userPassword)
 {
-   /*  console.log("being callaed UserLogin");
-    console.log("user password;", userPassword)
-    console.log("Email:", email); */
+
     let db;
     try {
-        //console.log("helllllo");
+    
         db = await mysql.createConnection(config);
         const sql = `CALL retrieve_hashed_password(?)`;
         const [rows, fields] = await db.execute(sql, [email]);
@@ -54,7 +52,7 @@ async function userLogIn(email, userPassword)
         }
 
         const isPasswordMatched = await bcrypt.compare(userPassword, hashedPassword);
-        //console.log("ispasswordmatched", isPasswordMatched);
+       
         if (isPasswordMatched) {
             return { success: true, message: "Successful login" };
         } else {
@@ -62,23 +60,23 @@ async function userLogIn(email, userPassword)
         }
     } catch (error) {
         console.error("Error during user login:", error);
-        throw error; // Propagate the error for further handling
+        throw error; 
     } finally {
-        // Ensure the database connection is closed
+      
         if (db && db.end) await db.end();
     }
 }
 
 async function isEmailVerified(email)
 {
-    //console.log("isemialverfied is called");
+  
     let db;
     try{
         db = await mysql.createConnection(config);
         let sql = `CALL is_email_verified(?)`
         const [rows, fields] = await db.execute(sql, [email]);
         const isEmailVerified = rows[0][0].verified;
-        //console.log("Email Verified:", isEmailVerified);
+        
         if(isEmailVerified)
         {
             return {success: true, message: "Email is verified"};
@@ -88,9 +86,9 @@ async function isEmailVerified(email)
         }
 
     } catch (error) {
-        throw error; // Propagate the error for further handling
+        throw error; 
     } finally {
-        // Ensure the database connection is closed
+      
         if (db && db.end) await db.end();
     }
 }
@@ -112,59 +110,70 @@ async function isEmailReg(registerEmail) {
         errors.general = 'error occurred, isEmailReg';
     }
     finally {
-        // Säkerställ att databaskopplingen stängs
+       
         if (db && db.end) await db.end();
     }
     return errors;
 }
 
 
-/* async function insert_info_qr_code(email, userInput)
-{
+
+async function insert_info_qr_code(email, textContent, imagePath, audioPath) {
     const db = await mysql.createConnection(config);
-    let sql = `CALL insert_to_qr_code(?, ?, ?, ?)`
+    const sql = `CALL insert_to_qr_code(?, ?, ?, ?)`;
 
-    let textContent = null;
-    let imagePath = null;
-    let audioPath = null;
-    console.log("async userInput :", userInput);
-    console.log("async userInput.f_text_content :", userInput.f_text_content);
-    //lägg till fler statements för imagePath och audioPath.
-    //Just nu så testar jag bara för textContent.
-    if(userInput.textContent)
-    {
-        textContent = userInput.textContent;
-    }
-
+    
     const [rows] = await db.query(sql, [email, textContent, imagePath, audioPath]);
     const labelId = rows[0][0].label_id;
     await db.end();
 
     return labelId;
 }
- */
 
-// moveout.js
-async function insert_info_qr_code(email, textContent) {
-    const db = await mysql.createConnection(config);
-    let sql = `CALL insert_to_qr_code(?, ?)`;
-
-    // Execute the stored procedure and get the label_id.
-    const [rows] = await db.query(sql, [email, textContent]);
-    const labelId = rows[0][0].label_id;
-    await db.end();
-
-    return labelId;
-}
 
 async function get_label_by_id(labelId) {
     const db = await mysql.createConnection(config);
     const sql = `SELECT * FROM qr_code_labels WHERE label_id = ?`;
 
     const [rows] = await db.query(sql, [labelId]);
+  
     await db.end();
 
     return rows[0];
+}
+
+
+async function insert_verification_code_label(labelId, verificationCode)
+{
+    const db = await mysql.createConnection(config);
+    const sql = `CALL insert_label_verification_code(?, ?)`;
+    await db.query(sql,[labelId, verificationCode]);
+    await db.end();
+}
+
+
+
+async function is_user_label_code_verified(labelId, verificationCode) {
+    const db = await mysql.createConnection(config);
+    const sql = `CALL validate_verification_code_label(?, ?)`;
+
+    let [rows] = await db.query(sql, [labelId, verificationCode]);
+    await db.end();
+
+    if (rows && rows[0] && rows[0][0]) {
+        const count = rows[0][0]['result']; 
+        return count > 0;
+    } else {
+        return false;
+    }
+}
+
+
+async function markLabelAsVerified(labelId) {
+    const db = await mysql.createConnection(config);
+    const sql = `CALL user_verified_label_code(?)`;
+    await db.query(sql, [labelId]);
+    await db.end();
 }
 
 
@@ -175,5 +184,8 @@ module.exports = {
     isEmailVerified,
     isEmailReg,
     insert_info_qr_code,
-    get_label_by_id
+    get_label_by_id,
+    insert_verification_code_label,
+    is_user_label_code_verified,
+    markLabelAsVerified
 };

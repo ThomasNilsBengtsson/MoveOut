@@ -2,13 +2,6 @@
 --
 
 
-/* DROP TABLE IF EXISTS register;
-
-CREATE TABLE register
-(
-    email VARCHAR(100) PRIMARY KEY NOT NULL,
-    user_password VARCHAR(100)
-); */
 DROP TABLE IF EXISTS qr_code_labels;
 DROP TABLE IF EXISTS register;
 
@@ -28,7 +21,9 @@ CREATE TABLE qr_code_labels (
     text_content TEXT,
     image_path VARCHAR(255),
     audio_path VARCHAR(255),
-    content_type ENUM('text', 'image', 'audio'), 
+    content_type ENUM('text', 'image', 'audio'),
+    verification_code VARCHAR(6), 
+    is_user_verified BOOLEAN DEFAULT FALSE,
     FOREIGN KEY (email) REFERENCES register(email)
 );
 
@@ -38,23 +33,60 @@ CREATE TABLE qr_code_labels (
 --Procedures
 --
 
-DROP PROCEDURE IF EXISTS insert_to_qr_code;
+
+DROP PROCEDURE IF EXISTS user_verified_label_code;
 DELIMITER ;;
-CREATE PROCEDURE insert_to_qr_code(
-    IN f_email VARCHAR(100),
-    IN f_text_content TEXT
+
+CREATE PROCEDURE user_verified_label_code(
+    IN f_label_id INT
 )
 BEGIN
-    INSERT INTO qr_code_labels (email, text_content, content_type)
-    VALUES (f_email, f_text_content, 'text');
+    UPDATE qr_code_labels
+    SET is_user_verified = TRUE
+    WHERE label_id = f_label_id;
+END;;
 
-    SELECT LAST_INSERT_ID() AS label_id;
-END ;;
 DELIMITER ;
 
 
 
-/* 
+DROP PROCEDURE IF EXISTS validate_verification_code_label;
+DELIMITER ;;
+
+CREATE PROCEDURE validate_verification_code_label(
+    IN f_label_id INT,
+    IN f_verification_code VARCHAR(6)
+)
+BEGIN
+    SELECT COUNT(*) AS result
+    FROM qr_code_labels
+    WHERE label_id = f_label_id AND verification_code = f_verification_code;
+END;;
+
+DELIMITER ;
+
+
+
+
+
+DROP PROCEDURE IF EXISTS insert_label_verification_code;
+DELIMITER ;;
+
+CREATE PROCEDURE insert_label_verification_code(
+    IN f_label_id INT,
+    IN f_verification_code VARCHAR(6)
+)
+BEGIN
+    UPDATE qr_code_labels
+    SET verification_code = f_verification_code
+    WHERE label_id = f_label_id;
+END ;;
+
+DELIMITER ;
+
+
+
+
 DROP PROCEDURE IF EXISTS insert_to_qr_code;
 DELIMITER ;;
 
@@ -88,7 +120,7 @@ BEGIN
 END;;
 
 DELIMITER ;
- */
+ 
 
 
 
@@ -129,24 +161,6 @@ DELIMITER ;
 
 
 
-
-/* DROP PROCEDURE IF EXISTS user_verification_by_token;
-DELIMITER ;;
-
-CREATE PROCEDURE user_verification_by_token(
-    f_verification_token VARCHAR(64)
-)
-BEGIN 
-    UPDATE register
-    SET verified = TRUE,
-        verification_token = NULL
-    WHERE verification_token = f_verification_token
-    AND verified = FALSE;
-END;;
-
-DELIMITER ;
-
- */
 
 DROP PROCEDURE IF EXISTS user_verification_by_token;
 DELIMITER ;;
