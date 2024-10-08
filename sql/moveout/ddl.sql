@@ -24,6 +24,7 @@ CREATE TABLE qr_code_labels (
     content_type ENUM('text', 'image', 'audio'),
     verification_code VARCHAR(6), 
     is_user_verified BOOLEAN DEFAULT FALSE,
+    is_label_private BOOLEAN DEFAULT FALSE,
     FOREIGN KEY (email) REFERENCES register(email)
 );
 
@@ -32,6 +33,22 @@ CREATE TABLE qr_code_labels (
 --
 --Procedures
 --
+
+
+
+DROP PROCEDURE IF EXISTS unverify_user_code_label;
+DELIMITER ;;
+
+CREATE PROCEDURE unverify_user_code_label(
+    IN f_label_id INT
+)
+BEGIN
+    UPDATE qr_code_labels
+    SET is_user_verified = FALSE
+    WHERE label_id = f_label_id;
+END;;
+
+DELIMITER ;
 
 
 DROP PROCEDURE IF EXISTS user_verified_label_code;
@@ -94,7 +111,8 @@ CREATE PROCEDURE insert_to_qr_code(
     IN f_email VARCHAR(100),
     IN f_text_content TEXT,
     IN f_image_path VARCHAR(255),
-    IN f_audio_path VARCHAR(255)
+    IN f_audio_path VARCHAR(255),
+    IN f_is_label_private TINYINT
 )
 BEGIN
     DECLARE v_content_type ENUM('text', 'image', 'audio');
@@ -113,8 +131,8 @@ BEGIN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'No content provided.';
     END IF;
 
-    INSERT INTO qr_code_labels (email, text_content, image_path, audio_path, content_type)
-    VALUES (f_email, f_text_content, f_image_path, f_audio_path, v_content_type);
+    INSERT INTO qr_code_labels (email, text_content, image_path, audio_path, content_type, is_label_private)
+    VALUES (f_email, f_text_content, f_image_path, f_audio_path, v_content_type, f_is_label_private);
 
     SELECT LAST_INSERT_ID() AS label_id;
 END;;

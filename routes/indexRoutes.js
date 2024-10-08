@@ -255,10 +255,13 @@ router.post('/create-label', isAuthenticated, upload.fields([
         title: "Create label",
         email: req.session.email
     };
+    console.log("Full form data: ", req.body);
 
     console.log("creating label");
     const email = req.session.email;
     const contentType = req.body.contentType; 
+    const isLabelPrivate = req.body.isLabelPrivate === "on";
+    console.log("Raw isLabelPrivate value:", req.body.isLabelPrivate);
 
     let textContent = null;
     let userImagePath = null;
@@ -274,15 +277,31 @@ router.post('/create-label', isAuthenticated, upload.fields([
         userAudioPath = "/uploads/audio/" + req.files.audioContent[0].filename;
     }
 
-    const labelId = await moveout.insert_info_qr_code(email, textContent, userImagePath, userAudioPath);
+    const labelId = await moveout.insert_info_qr_code(email, textContent, userImagePath, userAudioPath, isLabelPrivate);
 
+/* 
+    här inför logic för användaren ska välja label
+*/
+    let backgroundImagePath = null;
+    const selectedLabelDesign = req.body.labelDesign;
 
-    const imagePath = 'public/images/label-image.png';
+    if (selectedLabelDesign === 'label1') {
+        backgroundImagePath = 'public/background-images/label-image-black.png';
+    } else if (selectedLabelDesign === 'label2') {
+        backgroundImagePath = 'public/background-images/label-image-yellow.png';
+    } else if (selectedLabelDesign === 'label3') {
+        backgroundImagePath = 'public/background-images/label-image-gray.png';
+    }
+
     const qrContent = `https://04eb-2001-6b0-2a-c280-bdc1-f512-44f2-213.ngrok-free.app/label/${labelId}?email=${encodeURIComponent(email)}`; 
-    const qrImagePath = await qrFunctions.overlayQRCodeOnImage(qrContent, imagePath );
+    const qrImagePath = await qrFunctions.overlayQRCodeOnImage(qrContent, backgroundImagePath);
     const publicImagePath = '/' + path.relative('public', qrImagePath).replace(/\\/g, '/');
 
     data.imageUrl = publicImagePath;
+
+    /* 
+        lägg till logic för private eller inte label
+    */
 
     res.render("pages/create-label.ejs", data);
 });
@@ -293,23 +312,25 @@ router.get("/label/:labelId", async (req, res) => {
     const email = req.query.email;
 
     const label = await moveout.get_label_by_id(labelId);
-
-
-    if(!label.is_user_verified)
-    {
-        let verficationCode = label.verification_code;
-        if(!verficationCode)
+    console.log("Label info : ", label);
+    if(label.is_label_private)
+    {        
+        if(!label.is_user_verified)
         {
-            const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-            await moveout.insert_verification_code_label(labelId, verificationCode);
-            await emailFunctions.sendVerificationCodeLabel(email, verificationCode);
+            let verficationCode = label.verification_code;
+            if(!verficationCode)
+                {
+                    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+                    await moveout.insert_verification_code_label(labelId, verificationCode);
+                    await emailFunctions.sendVerificationCodeLabel(email, verificationCode);
+                    
+                }
+                return res.redirect(`/verification-code-label?labelId=${labelId}&email=${encodeURIComponent(email)}`);
+            }
             
-        }
-        return res.redirect(`/verification-code-label?labelId=${labelId}&email=${encodeURIComponent(email)}`);
+            await moveout.markLabelAsUnverified(labelId);
     }
-    
-
-
+                
     return res.render("pages/label.ejs", {
         title: "Label Details",
         label: label

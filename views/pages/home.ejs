@@ -4,13 +4,6 @@
     <main id="home" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh;">
         <h1>Welcome, <%= email %>!</h1>
 
-<!--         <style>
-            .gallery img {
-                width: 200px; 
-                height: 400px; 
-            }
-        </style> -->
-        
         <div class="gallery">
             <% images.forEach(image => { %>
                 <div class="image-item">
@@ -19,6 +12,23 @@
             <% }) %>
         </div>
 
+
+        <style>
+            .gallery {
+                display: flex;
+                flex-wrap: wrap; 
+                gap: 10px; 
+            }
+        
+            .image-item {
+                flex: 0 1 auto; 
+            }
+        
+            .image-item img {
+                display: block;
+            }
+        </style>
+        
         </main>
 </body>
 <%- include("./../partials/footer.ejs") %>

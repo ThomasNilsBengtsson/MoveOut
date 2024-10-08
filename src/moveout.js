@@ -118,12 +118,12 @@ async function isEmailReg(registerEmail) {
 
 
 
-async function insert_info_qr_code(email, textContent, imagePath, audioPath) {
+async function insert_info_qr_code(email, textContent, imagePath, audioPath, isLabelPrivate) {
     const db = await mysql.createConnection(config);
-    const sql = `CALL insert_to_qr_code(?, ?, ?, ?)`;
+    const sql = `CALL insert_to_qr_code(?, ?, ?, ?, ?)`;
 
     
-    const [rows] = await db.query(sql, [email, textContent, imagePath, audioPath]);
+    const [rows] = await db.query(sql, [email, textContent, imagePath, audioPath, isLabelPrivate ]);
     const labelId = rows[0][0].label_id;
     await db.end();
 
@@ -176,6 +176,13 @@ async function markLabelAsVerified(labelId) {
     await db.end();
 }
 
+async function markLabelAsUnverified(labelId) {
+    const db = await mysql.createConnection(config);
+    const sql = `CALL unverify_user_code_label(?)`;
+    await db.query(sql, [labelId]);
+    await db.end();
+}
+
 
 module.exports = {
     "registerUser": registerUser,
@@ -187,5 +194,6 @@ module.exports = {
     get_label_by_id,
     insert_verification_code_label,
     is_user_label_code_verified,
-    markLabelAsVerified
+    markLabelAsVerified,
+    markLabelAsUnverified
 };
