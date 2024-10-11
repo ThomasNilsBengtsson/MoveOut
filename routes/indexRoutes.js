@@ -1,9 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const moveout = require("../src/moveout.js");
-//console.log("moveout:", moveout);
 const verify = require("../verifiers/verifiers.js");
-//console.log('verify object:', verify);
 const validator = require('validator');
 const verifiers = require("../verifiers/verifiers.js");
 const emailFunctions = require("../utils/email.js");
@@ -12,21 +10,26 @@ const qrFunctions = require("../utils/generateQR.js");
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
+const { glob } = require('glob'); 
 
 
 const storage = multer.diskStorage({
     destination: function(req, file, cb) {
-        if(file.fieldname === "imageContent")
-        {
-            cb(null, 'public/uploads/images'); 
-        } 
-        else if(file.fieldname === "audioContent")
-        {
-            cb(null, 'public/uploads/audio');
+        let userDirectory;
+      
+        if (file.fieldname === "imageContent") {
+            userDirectory = path.join(__dirname, `../public/uploads/images/${req.session.email}`);
+        } else if (file.fieldname === "audioContent") {
+            userDirectory = path.join(__dirname, `../public/uploads/audio/${req.session.email}`);
+        } else {
+            return cb(new Error('Invalid field name.'), false);
         }
-        else {
-            cb(new Error('Invalid field name.'), false);
+
+        if (!fs.existsSync(userDirectory)) {
+            fs.mkdirSync(userDirectory, { recursive: true });
         }
+
+        cb(null, userDirectory);
     },
     filename: function(req, file, cb) {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
@@ -47,15 +50,11 @@ const upload = multer({
     }
 });
 
-
-
-
 router.get("/login", (req, res) => {
     let data = {
         error: {},
         title: "Login"
     };
-
 
     res.render("pages/login.ejs", data);
 });
@@ -68,8 +67,6 @@ router.post("/login", async (req, res) => {
 
     const email = req.body.f_email;
     const password = req.body.f_user_password;
-
-
     
     const result = await moveout.userLogIn(email, password);
     const verifiedEmail = await moveout.isEmailVerified(email);
@@ -83,9 +80,7 @@ router.post("/login", async (req, res) => {
         data.error.invalid = result.message;
         res.render("pages/login.ejs", data);
     }
-
 });
-
 
 router.get("/register", (req, res) => {
     const data = {
@@ -95,8 +90,6 @@ router.get("/register", (req, res) => {
     };
     res.render("pages/register.ejs", data);
 });
-
-
 
 router.post("/register", async (req, res) => {
 
@@ -141,11 +134,9 @@ router.post("/register", async (req, res) => {
             await moveout.registerUser(req.body, verificationToken);
             res.redirect("/login");
 
-            //email verification
             const verificationLink = `${process.env.BASE_URL}/email-verified?token=${verificationToken}&email=${encodeURIComponent(email)}`;
             await emailFunctions.sendVerificationEmail(email, verificationLink);
-    }
- 
+    }   
 });
 
 
@@ -159,20 +150,15 @@ router.get("/email-verified", async (req, res) => {
     };
     await moveout.userVerificationByToken(verificationToken);
     
-
     const email = req.query.email;
     await emailFunctions.accountCreationConfirmation(email);
     res.render("pages/email-verified.ejs", data);
 });
 
-
 router.post("/email-verified", async (req, res) => {
   
     res.redirect("/login");
 });
-
-
-
 
 router.post("/home", isAuthenticated, async (req, res) => {
     let data = {
@@ -201,40 +187,57 @@ router.post("/home", isAuthenticated, async (req, res) => {
 
     else if(formType === "addText")
     {
-
     userInput.textContent = req.body.f_text_content;
-    console.log("userInput",userInput);
     await moveout.insert_info_qr_code(req.session.email, userInput);
     }       
     
     res.render('pages/home.ejs', data);
 });
 
+router.get("/home", isAuthenticated, async (req, res) => {
+    try {
+        const directoryPath = path.join(__dirname, `../public/labels/${req.session.email}`);
+        const directoryPathAudio = path.join(__dirname, `../public/uploads/audio/${req.session.email}`);
+        const directoryPathImage = path.join(__dirname, `../public/uploads/images/${req.session.email}`);
+        const labels = await moveout.getLabelsByUser(req.session.email);
 
-router.get("/home", isAuthenticated, (req, res) => {
-
-    const directoryPath = path.join(__dirname, '../public/images');
-    
-    fs.readdir(directoryPath, (err, files) => {
-        if (err) {
-            console.error('Unable to scan directory:', err);
-            return res.status(500).send('Unable to display images.');
-        }
-
-        // Filter image files (assuming images are in .png, .jpg, etc.)
-        const imageFiles = files.filter(file => {
-            return file.endsWith('.png') || file.endsWith('.jpg') || file.endsWith('.jpeg');
+        [directoryPath, directoryPathAudio, directoryPathImage].forEach(dirPath => {
+            if (!fs.existsSync(dirPath)) {
+                fs.mkdirSync(dirPath, { recursive: true });
+                console.log(`Created new directory for user: ${dirPath}`);
+            }
         });
 
-        res.render('pages/home.ejs', {
-            title: 'Home',
-            email: req.session.email,
-            images: imageFiles
+        fs.readdir(directoryPath, (err, files) => {
+            if (err) {
+                console.error('Unable to scan directory:', err);
+                return res.status(500).send('Unable to display images.');
+            }
+
+            const imageFiles = files
+                .filter(file => file.endsWith('.png') || file.endsWith('.jpg') || file.endsWith('.jpeg'))
+                .map(file => {
+                    const match = file.match(/^qr_code_(\d+)\.png$/);
+                    const label_id = match ? parseInt(match[1], 10) : null;
+
+                    return label_id ? {
+                        filePath: `labels/${req.session.email}/${file}`,
+                        label_id: label_id
+                    } : null;
+                })
+                .filter(image => image !== null);
+
+            res.render('pages/home.ejs', {
+                title: 'Home',
+                email: req.session.email,
+                images: imageFiles
+            });
         });
-    });
+    } catch (error) {
+        console.error('Error loading home page:', error);
+        res.status(500).send('An error occurred while loading the home page.');
+    }
 });
-
-
 
 router.get("/create-label", isAuthenticated, (req, res) => {
     let data = {
@@ -245,7 +248,6 @@ router.get("/create-label", isAuthenticated, (req, res) => {
     res.render("pages/create-label.ejs", data);
 });
 
-
 router.post('/create-label', isAuthenticated, upload.fields([
     { name: 'imageContent', maxCount: 1 },
     { name: 'audioContent', maxCount: 1 }
@@ -255,14 +257,12 @@ router.post('/create-label', isAuthenticated, upload.fields([
         title: "Create label",
         email: req.session.email
     };
-    console.log("Full form data: ", req.body);
-
-    console.log("creating label");
+   
     const email = req.session.email;
     const contentType = req.body.contentType; 
+    const userDirectory = `public/labels/${email}`;
     const isLabelPrivate = req.body.isLabelPrivate === "on";
-    console.log("Raw isLabelPrivate value:", req.body.isLabelPrivate);
-
+    
     let textContent = null;
     let userImagePath = null;
     let userAudioPath = null;
@@ -271,17 +271,16 @@ router.post('/create-label', isAuthenticated, upload.fields([
         textContent = req.body.textContent;
     } 
     else if (contentType === "image"){
-        userImagePath = "/uploads/images/" + req.files.imageContent[0].filename;
+        imagePath = `/uploads/images/${email}/` + req.files.imageContent[0].filename;
+        userImagePath = JSON.stringify(imagePath);
     }
     else if(contentType === "audio"){
-        userAudioPath = "/uploads/audio/" + req.files.audioContent[0].filename;
+        audioPath = `/uploads/audio/${email}/` + req.files.audioContent[0].filename;
+        userAudioPath = JSON.stringify(audioPath);
     }
 
     const labelId = await moveout.insert_info_qr_code(email, textContent, userImagePath, userAudioPath, isLabelPrivate);
 
-/* 
-    här inför logic för användaren ska välja label
-*/
     let backgroundImagePath = null;
     const selectedLabelDesign = req.body.labelDesign;
 
@@ -293,17 +292,13 @@ router.post('/create-label', isAuthenticated, upload.fields([
         backgroundImagePath = 'public/background-images/label-image-gray.png';
     }
 
-    const qrContent = `https://04eb-2001-6b0-2a-c280-bdc1-f512-44f2-213.ngrok-free.app/label/${labelId}?email=${encodeURIComponent(email)}`; 
-    const qrImagePath = await qrFunctions.overlayQRCodeOnImage(qrContent, backgroundImagePath);
+    const qrContent = `https://4fb4-2001-6b0-2a-c280-bdc1-f512-44f2-213.ngrok-free.app/label/${labelId}?email=${encodeURIComponent(email)}`; 
+    const qrImagePath = await qrFunctions.overlayQRCodeOnImage(qrContent, backgroundImagePath, email, labelId);
     const publicImagePath = '/' + path.relative('public', qrImagePath).replace(/\\/g, '/');
 
     data.imageUrl = publicImagePath;
 
-    /* 
-        lägg till logic för private eller inte label
-    */
-
-    res.render("pages/create-label.ejs", data);
+    res.redirect("/home");
 });
 
 
@@ -311,8 +306,10 @@ router.get("/label/:labelId", async (req, res) => {
     const labelId = req.params.labelId;
     const email = req.query.email;
 
+    console.log('Fetching label for ID:', labelId);
     const label = await moveout.get_label_by_id(labelId);
-    console.log("Label info : ", label);
+    console.log('Label info:', label);
+
     if(label.is_label_private)
     {        
         if(!label.is_user_verified)
@@ -329,8 +326,33 @@ router.get("/label/:labelId", async (req, res) => {
             }
             
             await moveout.markLabelAsUnverified(labelId);
+    }  
+    if (typeof label.audio_path === 'string') {
+        try {
+            if (label.audio_path.trim().startsWith('[')) {
+                label.audio_path = JSON.parse(label.audio_path);
+            } else {
+                label.audio_path = [label.audio_path];
+            }
+        } catch (error) {
+            console.error('Failed to parse audio_path as JSON:', error);
+            label.audio_path = [label.audio_path];
+        }
     }
-                
+
+    if (typeof label.image_path === 'string') {
+        try {
+            if (label.image_path.trim().startsWith('[')) {
+                label.image_path = JSON.parse(label.image_path);
+            } else {
+                label.image_path = [label.image_path];
+            }
+        } catch (error) {
+            console.error('Failed to parse image_path as JSON:', error);
+            label.image_path = [label.image_path]; 
+        }
+    }
+
     return res.render("pages/label.ejs", {
         title: "Label Details",
         label: label
@@ -340,23 +362,19 @@ router.get("/label/:labelId", async (req, res) => {
 
 
 router.get("/verification-code-label", async (req, res) => {
-    console.log("label verification");
     const labelId = req.query.labelId;
     const email = req.query.email;
 
-    console.log("get verifcation doe email: ", email);
     if (!labelId || !email) {
         return res.status(400).send('Label ID and email are required.');
     }
 
-   
     res.render("pages/verification-code-label.ejs", {
         title: "Verify Label",
         labelId: labelId,
         email: email
     });
 });
-
 
 router.post("/verification-code-label", async (req, res) => {
 
@@ -379,6 +397,123 @@ router.post("/verification-code-label", async (req, res) => {
 
 });
 
+router.get('/label/:labelId/edit', isAuthenticated, async (req, res) => {
+    try {
+        const labelId = req.params.labelId;
+        const email = req.session.email;
+
+        const label = await moveout.getSpecificLabelByUser(labelId, email);
+
+        if (!label) {
+            return res.status(404).send('Label not found.');
+        }
+
+        res.render('pages/edit-label.ejs', {
+            title: 'Edit Label',
+            email: email,
+            label: label
+        });
+    } catch (error) {
+        console.error('Error fetching label for edit:', error);
+        res.status(500).send('An error occurred while fetching the label.');
+    }
+});
+
+
+router.post('/label/:labelId/edit', isAuthenticated, upload.fields([
+    { name: 'imageContent', maxCount: 10 },
+    { name: 'audioContent', maxCount: 10 }
+]), async (req, res) => {
+    try {
+        const labelId = req.params.labelId;
+        const email = req.session.email;
+
+        const existingLabel = await moveout.getSpecificLabelByUser(labelId, email);
+
+        if (!existingLabel) {
+            return res.status(404).send('Label not found.');
+        }
+        
+        const isLabelPrivate = req.body.isLabelPrivate === 'on';
+        let textContent = req.body.textContent || existingLabel.text_content;
+        
+
+    let imagePaths = [];
+    let audioPaths = [];
+
+    if (existingLabel.image_path && existingLabel.image_path !== 'null') {
+        try {
+            imagePaths = JSON.parse(existingLabel.image_path);
+        } catch (error) {
+            imagePaths = [existingLabel.image_path];
+        }
+    }
+
+    if (existingLabel.audio_path && existingLabel.audio_path !== 'null') {
+        try {
+            audioPaths = JSON.parse(existingLabel.audio_path);
+        } catch (error) {
+            audioPaths = [existingLabel.audio_path];
+        }
+    }
+
+    if (req.files.imageContent) {
+        const newImagePaths = req.files.imageContent.map(file => `/uploads/images/${email}/${file.filename}`);
+        imagePaths = imagePaths.concat(newImagePaths);
+    }
+
+    if (req.files.audioContent) {
+        const newAudioPaths = req.files.audioContent.map(file => `/uploads/audio/${email}/${file.filename}`);
+        audioPaths = audioPaths.concat(newAudioPaths);
+    }
+
+    const imagePathsJson = imagePaths.length > 0 ? JSON.stringify(imagePaths) : null;
+    const audioPathsJson = audioPaths.length > 0 ? JSON.stringify(audioPaths) : null;
+
+
+        await moveout.updateLabel(labelId, {
+            text_content: textContent,
+            image_path: imagePathsJson,
+            audio_path: audioPathsJson,
+            is_label_private: isLabelPrivate
+        });
+
+        res.redirect('/home');
+    } catch (error) {
+        console.error('Error updating label:', error);
+        res.status(500).send('An error occurred while updating the label.');
+    }
+});
+
+
+router.post('/label/:labelId/delete', isAuthenticated, async (req, res) => {
+    const labelId = req.params.labelId;
+    const email = req.session.email;
+    const label = await moveout.get_label_by_id(labelId);
+
+    const labelFilePattern = path.join(
+        __dirname, 
+        '..', 
+        'public', 
+        'labels', 
+        email, 
+        `qr_code_${labelId}.*`
+    );
+
+    const files = await glob(labelFilePattern);
+
+    for (const file of files) {
+        try {
+            await fs.promises.unlink(file);
+            console.log(`Deleted label file: ${file}`);
+        } catch (err) {
+            console.error(`Failed to delete label file: ${file}`, err);
+        }
+    }
+    await moveout.deleteLabel(labelId)
+    res.redirect("/home");     
+});
+
 
 
 router.post('/logout', (req, res) => {
@@ -390,8 +525,5 @@ router.post('/logout', (req, res) => {
         res.redirect('/login');
     });
 });
-
-
-
 
 module.exports = router;

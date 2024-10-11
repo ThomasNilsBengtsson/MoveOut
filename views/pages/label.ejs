@@ -1,20 +1,27 @@
 <%- include("./../partials/header.ejs") %>
 <body>
-    <h1>Label Details</h1>
     <% if(label.text_content) { %>
         <h2><%= label.text_content || 'No text content yet.' %></h2>
     <% } %>
     
-    <% if(label.image_path) { %>
-        <h1>Your Image</h1>
-        <img src="<%= label.image_path %>" alt="User image" style="max-width: 100%;">
+    <% if (Array.isArray(label.image_path) && label.image_path.length > 0) { %>
+        <h1>Your Images</h1>
+        <% label.image_path.forEach(function(image) { %>
+            <% if (image && image !== 'null') { %>
+                <img src="<%= image %>" alt="User image" style="max-width: 100%; margin-bottom: 10px;">
+            <% } %>
+        <% }) %>
     <% } %>
-
-    <% if(label.audio_path) { %>
+    
+    <% if (Array.isArray(label.audio_path) && label.audio_path.length > 0) { %>
         <h1>Audio</h1>
-        <audio controls>
-            <source src="<%= label.audio_path %>" type="audio/mpeg">
-        </audio>
+        <% label.audio_path.forEach(function(audio) { %>
+            <% if (audio && audio !== 'null') { %>
+                <audio controls>
+                    <source src="<%= audio %>" type="audio/mpeg">
+                </audio>
+            <% } %>
+        <% }) %>
     <% } %>
 </body>
 <%- include("./../partials/footer.ejs") %>

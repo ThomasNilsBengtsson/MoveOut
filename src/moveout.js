@@ -76,6 +76,13 @@ async function isEmailVerified(email)
         let sql = `CALL is_email_verified(?)`
         const [rows, fields] = await db.execute(sql, [email]);
         const isEmailVerified = rows[0][0].verified;
+        async function markLabelAsUnverified(email) {
+            const db = await mysql.createConnection(config);
+            const sql = `CALL get_labels_by_user(?)`;
+            const [rows] = await db.query(sql, [email]);
+            await db.end();
+            return rows[0][0];
+        }
         
         if(isEmailVerified)
         {
@@ -183,6 +190,55 @@ async function markLabelAsUnverified(labelId) {
     await db.end();
 }
 
+async function getSpecificLabelByUser(labelId, email) {
+    const db = await mysql.createConnection(config);
+    const sql = `CALL get_specific_label_by_user(?, ?)`;
+    const [rows] = await db.query(sql, [labelId, email]);
+    await db.end();
+    return rows[0][0];
+}
+
+
+async function getLabelsByUser(email) {
+    const db = await mysql.createConnection(config);
+    const sql = `CALL get_labels_by_user(?)`;
+    const [rows] = await db.query(sql, [email]);
+    await db.end();
+    return rows[0];
+}
+
+async function deleteLabel(labelId) {
+    const db = await mysql.createConnection(config);
+    const sql = `CALL delete_label(?)`;
+    
+   
+    const [rows] = await db.query(sql, [labelId]);
+    await db.end();
+    
+    if (rows && rows[0] && rows[0].message) {
+        return rows[0].message;
+    } else {
+        return 'No message returned from procedure.';
+    }
+}
+
+
+
+async function updateLabel(labelId, { text_content, image_path, audio_path, is_label_private }) {
+    const db = await mysql.createConnection(config);
+    const sql = `CALL update_label(?, ?, ?, ?, ?)`;
+    const [result] = await db.query(sql, [
+        labelId,
+        text_content,
+        JSON.stringify(image_path),
+        JSON.stringify(audio_path), 
+        is_label_private
+    ]);
+    await db.end();
+    return result;
+}
+
+
 
 module.exports = {
     "registerUser": registerUser,
@@ -195,5 +251,10 @@ module.exports = {
     insert_verification_code_label,
     is_user_label_code_verified,
     markLabelAsVerified,
-    markLabelAsUnverified
+    markLabelAsUnverified,
+    getSpecificLabelByUser,
+    getLabelsByUser,
+    deleteLabel,
+    updateLabel
+    
 };

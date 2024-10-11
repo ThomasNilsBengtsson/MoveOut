@@ -1,6 +1,5 @@
 <%- include("./../partials/header.ejs") %>
 <body>
-    <h1>Enter Verification Code</h1>
     <p>We've sent a 6-digit code to your email. Please enter it below to continue:</p>
     <form action="/verification-code-label" method="POST">
         <input type="hidden" name="labelId" value="<%= labelId %>">

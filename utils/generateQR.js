@@ -3,9 +3,9 @@ const QRCode = require('qrcode');
 const { v4: uuidv4 } = require('uuid');
 const path = require('path');
 
-async function overlayQRCodeOnImage(text, imagePath) {
-  const filename = uuidv4() + '.png';
-  const outputPath = path.join('public', 'images', filename);
+async function overlayQRCodeOnImage(text, imagePath, email, labelId) {
+  const filename = `qr_code_${labelId}.png`;
+  const outputPath = path.join('public', 'labels', email, filename);
 
   
   const qrBuffer = await QRCode.toBuffer(text, { width: 100, height: 100 });

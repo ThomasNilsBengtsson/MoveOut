@@ -28,11 +28,115 @@ CREATE TABLE qr_code_labels (
     FOREIGN KEY (email) REFERENCES register(email)
 );
 
+ALTER TABLE qr_code_labels
+MODIFY audio_path JSON;
 
-
+ALTER TABLE qr_code_labels
+MODIFY image_path JSON;
 --
 --Procedures
 --
+
+DROP PROCEDURE IF EXISTS delete_label;
+DELIMITER ;;
+
+CREATE PROCEDURE delete_label(
+    IN f_label_id INT)
+BEGIN
+    DECLARE label_exists INT;
+    SET label_exists = (SELECT COUNT(*) FROM qr_code_labels WHERE label_id = f_label_id);
+
+    IF label_exists > 0 THEN
+        DELETE FROM qr_code_labels WHERE label_id = f_label_id;
+        SELECT 'Label successfully deleted' AS message;
+    ELSE
+        SELECT 'Label not found' AS message;
+    END IF;
+END ;;
+
+DELIMITER ;
+
+
+
+DROP PROCEDURE IF EXISTS update_label;
+DELIMITER ;;
+
+CREATE PROCEDURE update_label(
+    IN f_label_id INT,
+    IN f_text_content TEXT,
+    IN f_image_path VARCHAR(255),
+    IN f_audio_path JSON,
+    IN f_is_label_private BOOLEAN
+)
+BEGIN
+    UPDATE qr_code_labels
+    SET 
+        text_content = f_text_content,
+        image_path = f_image_path,
+        audio_path = f_audio_path,
+        is_label_private = f_is_label_private
+    WHERE 
+        label_id = f_label_id;
+END ;;
+
+DELIMITER ;
+
+
+
+DROP PROCEDURE IF EXISTS get_specific_label_by_user;
+DELIMITER ;;
+
+CREATE PROCEDURE get_specific_label_by_user(
+    IN f_label_id INT,
+    IN f_email VARCHAR(100)
+)
+BEGIN
+    SELECT
+        label_id, 
+        text_content, 
+        image_path, 
+        audio_path, 
+        content_type,
+        verification_code,
+        is_user_verified, 
+        is_label_private
+    FROM 
+    qr_code_labels
+    WHERE
+        email = f_email AND label_id = f_label_id;
+END;;
+
+DELIMITER ;
+
+
+
+
+
+DROP PROCEDURE IF EXISTS get_labels_by_user;
+DELIMITER ;;
+
+CREATE PROCEDURE get_labels_by_user(
+    IN f_email VARCHAR(100)
+)
+BEGIN
+    SELECT 
+        label_id, 
+        text_content, 
+        image_path, 
+        audio_path, 
+        content_type,
+        verification_code,
+        is_user_verified, 
+        is_label_private
+    FROM 
+        qr_code_labels
+    WHERE 
+        email = f_email;
+END;;
+
+DELIMITER ;
+
+
 
 
 
