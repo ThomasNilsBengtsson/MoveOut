@@ -515,6 +515,15 @@ router.post('/label/:labelId/delete', isAuthenticated, async (req, res) => {
 });
 
 
+router.get('/share-labels', isAuthenticated, async (req, res) => {
+
+
+        res.render('pages/share-labels.ejs', {
+            title: 'share label'
+        });
+});
+
+
 
 router.post('/logout', (req, res) => {
     req.session.destroy(err => {

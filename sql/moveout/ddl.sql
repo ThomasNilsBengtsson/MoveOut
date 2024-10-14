@@ -33,9 +33,71 @@ MODIFY audio_path JSON;
 
 ALTER TABLE qr_code_labels
 MODIFY image_path JSON;
+
+
+CREATE TABLE shared_labels (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    original_label_id INT NOT NULL, -- Refers to the original label shared by the sender
+    cloned_label_id INT NOT NULL, -- Refers to the new label record created for the recipient
+    sender_email VARCHAR(100) NOT NULL,
+    recipient_email VARCHAR(100) NOT NULL,
+    shared_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (original_label_id) REFERENCES qr_code_labels(label_id),
+    FOREIGN KEY (cloned_label_id) REFERENCES qr_code_labels(label_id),
+    FOREIGN KEY (sender_email) REFERENCES register(email),
+    FOREIGN KEY (recipient_email) REFERENCES register(email)
+);
+
 --
 --Procedures
 --
+
+DROP PROCEDURE IF EXISTS get_shared_labels;
+DELIMITER ;;
+
+CREATE PROCEDURE get_shared_labels(
+    IN p_recipient_email VARCHAR(100)
+)
+BEGIN
+    SELECT l.label_id, l.text_content, l.image_path, l.audio_path, l.content_type, s.sender_email, s.shared_date
+    FROM qr_code_labels l
+    INNER JOIN shared_labels s ON l.label_id = s.cloned_label_id
+    WHERE s.recipient_email = p_recipient_email;
+END ;;
+
+DELIMITER ;
+
+
+
+
+DROP PROCEDURE IF EXISTS share_label;
+DELIMITER ;;
+
+CREATE PROCEDURE share_label(
+    IN f_label_id INT,
+    IN f_sender_email VARCHAR(100),
+    IN f_recipient_email VARCHAR(100)
+)
+BEGIN
+
+    DECLARE new_label_id INT;
+
+    INSERT INTO qr_code_labels (email, text_content, image_path, audio_path, content_type, is_label_private)
+    SELECT f_recipient_email, text_content, image_path, audio_path, content_type, is_label_private
+    FROM qr_code_labels
+    WHERE label_id = f_label_id;
+
+    SET new_label_id = LAST_INSERT_ID();
+
+    INSERT INTO shared_labels (original_label_id, cloned_label_id, sender_email, recipient_email)
+    VALUES (f_label_id, new_label_id, f_sender_email, f_recipient_email);
+END ;;
+
+DELIMITER ;
+
+
+
+
 
 DROP PROCEDURE IF EXISTS delete_label;
 DELIMITER ;;
