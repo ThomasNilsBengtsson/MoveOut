@@ -21,3 +21,271 @@ mysql -u doadmin -p -h moveout-do-user-17804934-0.k.db.ondigitalocean.com -P 250
                 <button type="submit">Add text list</button>
             </form>
         <% } %> -->
+
+
+
+        autzero for googel account buttoon
+
+
+
+
+
+
+
+        share-labels.ejs
+
+
+<!-- 
+<button class="add-contact-button" onclick="openAddContactModal()">+ Add Contact</button>
+
+
+<div id="addContactModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <span class="close" onclick="closeAddContactModal()">&times;</span>
+        <h2>Add Contact</h2>
+        <form id="addContactForm">
+            <label for="contactName">Name:</label>
+            <input type="text" id="contactName" name="contactName" required>
+            <label for="contactEmail">Email:</label>
+            <input type="email" id="contactEmail" name="contactEmail" required>
+            <button type="submit">Add Contact</button>
+        </form>
+    </div>
+</div>
+
+
+<div class="contact-grid" id="contactGrid">
+        <h3><%= contact.name || 'No Name' %></h3>
+        <p><%= contact.email %></p>
+        <div class="card-actions">
+            <form action="/share-label" method="POST" style="display: inline;">
+                <input type="hi dden" name="contactEmail" value="<%= contact.email %>">
+                <input type="hidden" name="labelId" value="<%= labelId %>"> 
+                <button type="submit" class="share-button">Share</button>
+            </form>
+            <button class="edit-button" onclick="editContact('<%= contact.id %>')">Edit</button>
+            <button class="delete-button" onclick="deleteContact('<%= contact.id %>')">Delete</button>
+        </div>
+</div>
+
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f6f9;
+        margin: 0;
+        padding: 20px;
+    }
+
+    .add-contact-button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background-color 0.3s ease;
+        margin-bottom: 20px;
+    }
+
+    .add-contact-button:hover {
+        background-color: #0056b3;
+    }
+
+    .modal {
+        display: none; 
+        position: fixed; 
+        z-index: 1; 
+        left: 0;
+        top: 0;
+        width: 100%; 
+        height: 100%; 
+        background-color: rgba(0, 0, 0, 0.5); 
+    }
+
+    .modal-content {
+        background-color: #fff;
+        margin: 15% auto;
+        padding: 20px;
+        border-radius: 10px;
+        width: 30%;
+        max-width: 400px;
+    }
+
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+    }
+
+    .close:hover,
+    .close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .contact-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+
+    .contact-card {
+        background: #ffffff;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        width: 200px;
+    }
+
+    .card-actions {
+        margin-top: 10px;
+    }
+
+    .share-button,
+    .edit-button,
+    .delete-button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+        margin: 5px;
+    }
+
+    .delete-button {
+        background-color: #dc3545;
+    }
+
+    .share-button:hover,
+    .edit-button:hover {
+        background-color: #0056b3;
+    }
+
+    .delete-button:hover {
+        background-color: #c82333;
+    }
+</style>
+
+
+<script>
+    function openAddContactModal() {
+        document.getElementById('addContactModal').style.display = 'block';
+    }
+
+    function closeAddContactModal() {
+        document.getElementById('addContactModal').style.display = 'none';
+    }
+
+    document.getElementById('addContactForm').onsubmit = function(event) {
+        event.preventDefault();
+
+       
+        const contactName = document.getElementById('contactName').value;
+        const contactEmail = document.getElementById('contactEmail').value;
+
+        const contactGrid = document.getElementById('contactGrid');
+        const newContactHtml = `
+            <div class="contact-card">
+                <h3>${contactName}</h3>
+                <p>${contactEmail}</p>
+                <div class="card-actions">
+                    <button class="share-button">Share</button>
+                    <button class="edit-button">Edit</button>
+                    <button class="delete-button">Delete</button>
+                </div>
+            </div>
+        `;
+        contactGrid.insertAdjacentHTML('beforeend', newContactHtml);
+
+
+        document.getElementById('addContactForm').reset();
+        closeAddContactModal();
+    };
+</script>
+
+<%- include("./../partials/footer.ejs") %>
+ -->
+
+
+
+ async function acceptSharedLabel(sharedId, recipientEmail) {
+    const db = await mysql.createConnection(config);
+
+    try {
+        // Step 1: Get the shared label information
+        const [rows] = await db.query('CALL get_shared_label_details(?)', [sharedId]);
+        const sharedLabel = rows[0][0];  // Assuming the procedure returns the shared label details
+
+        if (!sharedLabel) {
+            throw new Error('Shared label not found.');
+        }
+
+        // Parse image and audio paths if they exist
+        let imagePaths = sharedLabel.image_path ? JSON.parse(sharedLabel.image_path) : [];
+        let audioPaths = sharedLabel.audio_path ? JSON.parse(sharedLabel.audio_path) : [];
+
+        // Generate new paths for User B using the same logic from Multer
+        const baseDir = path.resolve(__dirname, '../public');
+        const recipientImageDir = path.join(baseDir, 'uploads', 'images', recipientEmail);
+        const recipientAudioDir = path.join(baseDir, 'uploads', 'audio', recipientEmail);
+
+        // Ensure user directories exist
+        if (!fs.existsSync(recipientImageDir)) {
+            fs.mkdirSync(recipientImageDir, { recursive: true });
+        }
+        if (!fs.existsSync(recipientAudioDir)) {
+            fs.mkdirSync(recipientAudioDir, { recursive: true });
+        }
+
+        // Copy files and generate new paths
+        let newImagePaths = [];
+        let newAudioPaths = [];
+
+        if (imagePaths.length > 0) {
+            imagePaths.forEach(imagePath => {
+                // Correcting the old path construction
+                const oldImagePath = path.join(baseDir, imagePath);
+                const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+                const newImagePath = path.join('uploads', 'images', recipientEmail, uniqueSuffix + path.extname(imagePath));
+                const targetImagePath = path.join(baseDir, newImagePath);
+                fs.copyFileSync(oldImagePath, targetImagePath);
+                newImagePaths.push(newImagePath);
+            });
+        }
+
+        if (audioPaths.length > 0) {
+            audioPaths.forEach(audioPath => {
+                // Correcting the old path construction
+                const oldAudioPath = path.join(baseDir, audioPath);
+                const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+                const newAudioPath = path.join('uploads', 'audio', recipientEmail, uniqueSuffix + path.extname(audioPath));
+                const targetAudioPath = path.join(baseDir, newAudioPath);
+                fs.copyFileSync(oldAudioPath, targetAudioPath);
+                newAudioPaths.push(newAudioPath);
+            });
+        }
+
+        // Insert the new label record into the qr_code_labels table for User B
+        await db.query('CALL accept_shared_label(?, ?, ?, ?, ?)', [
+            recipientEmail,
+            sharedLabel.text_content,
+            JSON.stringify(newImagePaths),
+            JSON.stringify(newAudioPaths),
+            sharedLabel.content_type
+        ]);
+
+        console.log('Label accepted successfully.');
+
+    } catch (error) {
+        console.error('Error accepting shared label:', error);
+    } finally {
+        await db.end();
+    }
+}

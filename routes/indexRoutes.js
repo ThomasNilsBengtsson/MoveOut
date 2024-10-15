@@ -7,6 +7,7 @@ const verifiers = require("../verifiers/verifiers.js");
 const emailFunctions = require("../utils/email.js");
 const isAuthenticated = require('../utils/auth.js');
 const qrFunctions = require("../utils/generateQR.js");
+const login = require("../utils/loginPost.js");
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
@@ -60,26 +61,7 @@ router.get("/login", (req, res) => {
 });
 
 router.post("/login", async (req, res) => {
-    let data = {
-        error: {},
-        title: "Login"
-    };
-
-    const email = req.body.f_email;
-    const password = req.body.f_user_password;
-    
-    const result = await moveout.userLogIn(email, password);
-    const verifiedEmail = await moveout.isEmailVerified(email);
-    if(result.success && verifiedEmail.success)
-    {
-        req.session.email = email;
-        res.redirect("/home");
-    }
-    else
-    {
-        data.error.invalid = result.message;
-        res.render("pages/login.ejs", data);
-    }
+    await login.loginPost(req, res);
 });
 
 router.get("/register", (req, res) => {
@@ -292,7 +274,7 @@ router.post('/create-label', isAuthenticated, upload.fields([
         backgroundImagePath = 'public/background-images/label-image-gray.png';
     }
 
-    const qrContent = `https://4fb4-2001-6b0-2a-c280-bdc1-f512-44f2-213.ngrok-free.app/label/${labelId}?email=${encodeURIComponent(email)}`; 
+    const qrContent = ` https://8c74-2001-6b0-2a-c280-bdc1-f512-44f2-213.ngrok-free.app/label/${labelId}?email=${encodeURIComponent(email)}`; 
     const qrImagePath = await qrFunctions.overlayQRCodeOnImage(qrContent, backgroundImagePath, email, labelId);
     const publicImagePath = '/' + path.relative('public', qrImagePath).replace(/\\/g, '/');
 
@@ -521,6 +503,82 @@ router.get('/share-labels', isAuthenticated, async (req, res) => {
         res.render('pages/share-labels.ejs', {
             title: 'share label'
         });
+});
+
+
+router.post('/share-label', async (req, res) => {
+    try {
+        const { recipientEmail, labelId } = req.body;
+        const senderEmail = req.session.email; // Assuming you have the sender's email in the session.
+
+        // Call the stored procedure to share the label
+        await moveout.shareLabel(labelId, senderEmail, recipientEmail);
+
+        res.redirect('/home'); // Redirect to home after sharing the label.
+    } catch (error) {
+        console.error('Error sharing label:', error);
+        res.status(500).send('An error occurred while sharing the label.');
+    }
+});
+
+
+router.get('/inbox', isAuthenticated, async (req, res) => {
+    try {
+        const recipientEmail = req.session.email;  // Assuming you store user email in session
+        const sharedLabels = await moveout.getSharedLabels(recipientEmail);
+        //console.log("sharedlabels  :",sharedLabels);
+        res.render("pages/inbox.ejs", { 
+            sharedLabels,
+            title: 'Inbox'  // Adding a title for the inbox page
+        });
+    } catch (error) {
+        console.error('Error retrieving shared labels:', error);
+        res.status(500).send('Server error');
+    }
+});
+
+router.post('/discard-label', isAuthenticated, async (req, res) => {
+    try {
+        console.log("Request body:", req.body);
+        const sharedId = req.body.shared_id;
+        console.log("Received shared ID:", sharedId);
+        
+        if (!sharedId) {
+            throw new Error('Shared ID not found in the request.');
+        }
+
+        // Call the deleteSharedLabel function
+        await moveout.deleteSharedLabel(sharedId);
+
+        // Redirect back to inbox after deleting
+        res.redirect('/inbox');
+    } catch (error) {
+        console.error('Error discarding label:', error);
+        res.status(500).send('Server error');
+    }
+});
+
+
+
+
+router.post('/accept-label', isAuthenticated, async (req, res) => {
+    try {
+        const sharedId = req.body.shared_id; // Get the shared_id from the request body
+        const recipientEmail = req.session.email; // Get the recipient's email from the session
+
+        if (!sharedId) {
+            throw new Error('Shared ID not found in the request.');
+        }
+
+        // Call the acceptSharedLabel function
+        await moveout.acceptSharedLabel(sharedId, recipientEmail);
+
+        // Redirect back to the inbox after accepting the label
+        res.redirect('/inbox');
+    } catch (error) {
+        console.error('Error accepting label:', error);
+        res.status(500).send('Server error');
+    }
 });
 
 

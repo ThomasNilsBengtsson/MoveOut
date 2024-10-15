@@ -1,0 +1,78 @@
+<%- include("./../partials/header.ejs") %>
+
+<h2>Inbox</h2>
+<% sharedLabels.forEach(sharedLabel => { %>
+    <div class="shared-label-item" style="border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; border-radius: 5px;">
+        <p>Shared ID: <%= sharedLabel.shared_id %></p> <!-- Debugging line -->
+        <p><strong>Label shared by:</strong> <%= sharedLabel.sender_email %></p>
+        <p><strong>Shared date:</strong> <%= new Date(sharedLabel.shared_date).toLocaleString() %></p>
+
+        <div class="actions" style="margin-top: 10px;">
+            <form action="/discard-label" method="POST" style="display: inline;">
+                <!-- Include the shared_id as a hidden input -->
+                <input type="hidden" name="shared_id" value="<%= sharedLabel.shared_id %>">
+                <button type="submit" class="discard-button" style="background-color: #e74c3c; color: white; padding: 8px 12px; border: none; border-radius: 3px; cursor: pointer;">Discard</button>
+            </form>
+
+            <form action="/accept-label" method="POST" style="display: inline;">
+                <input type="hidden" name="shared_id" value="<%= sharedLabel.shared_id %>">
+                <button type="submit" class="accept-button" style="background-color: #2ecc71; color: white; padding: 8px 12px; border: none; border-radius: 3px; cursor: pointer;">Accept</button>
+            </form>
+        </div>
+    </div>
+<% }) %>
+
+
+
+<style>
+    .inbox-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        max-width: 800px;
+        margin: 20px auto;
+        padding: 20px;
+        background: #f4f6f9;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .inbox-item {
+        padding: 10px;
+        border-bottom: 1px solid #ccc;
+    }
+
+    .inbox-actions {
+        margin-top: 10px;
+    }
+
+    .accept-button,
+    .discard-button {
+        padding: 8px 15px;
+        margin-right: 10px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+    .accept-button {
+        background-color: #28a745;
+        color: white;
+    }
+
+    .accept-button:hover {
+        background-color: #218838;
+    }
+
+    .discard-button {
+        background-color: #dc3545;
+        color: white;
+    }
+
+    .discard-button:hover {
+        background-color: #c82333;
+    }
+</style>
+
+<%- include("./../partials/footer.ejs") %>
