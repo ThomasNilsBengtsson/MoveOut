@@ -18,6 +18,7 @@ CREATE TABLE register (
 
 CREATE TABLE qr_code_labels (
     label_id INT AUTO_INCREMENT PRIMARY KEY,
+    label_name VARCHAR(20),
     email VARCHAR(100),
     text_content TEXT,
     image_path VARCHAR(255),
@@ -35,6 +36,9 @@ MODIFY audio_path JSON;
 ALTER TABLE qr_code_labels
 MODIFY image_path JSON;
 
+ALTER TABLE qr_code_labels ADD CONSTRAINT unique_label_name UNIQUE (label_name);
+
+
 
 CREATE TABLE shared_labels (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -50,6 +54,25 @@ CREATE TABLE shared_labels (
 --
 --Procedures
 --
+
+
+DROP PROCEDURE IF EXISTS check_if_label_name_exists;
+DELIMITER ;;
+
+CREATE PROCEDURE check_if_label_name_exists(
+    IN f_label_name VARCHAR(15),
+    IN f_email VARCHAR(100)
+)
+BEGIN
+    SELECT COUNT(*) AS label_count 
+    FROM qr_code_labels
+    WHERE label_name = f_label_name AND email = f_email;
+END;;
+
+DELIMITER ;
+
+
+
 
 DROP PROCEDURE IF EXISTS get_shared_label_details;
 DELIMITER ;;
@@ -388,6 +411,7 @@ DELIMITER ;;
 
 CREATE PROCEDURE insert_to_qr_code(
     IN f_email VARCHAR(100),
+    IN f_label_name VARCHAR(15),
     IN f_text_content TEXT,
     IN f_image_path VARCHAR(255),
     IN f_audio_path VARCHAR(255),
@@ -410,8 +434,8 @@ BEGIN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'No content provided.';
     END IF;
 
-    INSERT INTO qr_code_labels (email, text_content, image_path, audio_path, content_type, is_label_private)
-    VALUES (f_email, f_text_content, f_image_path, f_audio_path, v_content_type, f_is_label_private);
+    INSERT INTO qr_code_labels (email, label_name, text_content, image_path, audio_path, content_type, is_label_private)
+    VALUES (f_email, f_label_name, f_text_content, f_image_path, f_audio_path, v_content_type, f_is_label_private);
 
     SELECT LAST_INSERT_ID() AS label_id;
 END;;

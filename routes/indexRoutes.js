@@ -244,7 +244,12 @@ router.post('/create-label', isAuthenticated, upload.fields([
     const contentType = req.body.contentType; 
     const userDirectory = `public/labels/${email}`;
     const isLabelPrivate = req.body.isLabelPrivate === "on";
+    const labelName = req.body.labelName;
+
     
+
+
+
     let textContent = null;
     let userImagePath = null;
     let userAudioPath = null;
@@ -261,7 +266,14 @@ router.post('/create-label', isAuthenticated, upload.fields([
         userAudioPath = JSON.stringify(audioPath);
     }
 
-    const labelId = await moveout.insert_info_qr_code(email, textContent, userImagePath, userAudioPath, isLabelPrivate);
+    const labelExists = await moveout.check_if_label_name_exists(email, labelName);
+
+    if (labelExists) {
+        return res.status(400).send("Label name must be unique. This label name already exists.");
+    }
+
+    // Attempt to insert label data into the database
+    const labelId = await moveout.insert_info_qr_code(email, labelName, textContent, userImagePath, userAudioPath, isLabelPrivate);
 
     let backgroundImagePath = null;
     const selectedLabelDesign = req.body.labelDesign;
@@ -275,12 +287,13 @@ router.post('/create-label', isAuthenticated, upload.fields([
     }
 
     const qrContent = `https://85af-2001-6b0-2a-c280-bdc1-f512-44f2-213.ngrok-free.app/label/${labelId}?email=${encodeURIComponent(email)}`; 
-    const qrImagePath = await qrFunctions.overlayQRCodeOnImage(qrContent, backgroundImagePath, email, labelId);
+    const qrImagePath = await qrFunctions.overlayQRCodeOnImage(qrContent, backgroundImagePath, email, labelId, labelName);
     const publicImagePath = '/' + path.relative('public', qrImagePath).replace(/\\/g, '/');
 
     data.imageUrl = publicImagePath;
 
     res.redirect("/home");
+
 });
 
 
@@ -409,7 +422,7 @@ router.post('/label/:labelId/edit', isAuthenticated, upload.fields([
     try {
         const labelId = req.params.labelId;
         const email = req.session.email;
-
+ 
         const existingLabel = await moveout.getSpecificLabelByUser(labelId, email);
 
         if (!existingLabel) {

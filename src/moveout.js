@@ -155,14 +155,34 @@ async function isEmailReg(registerEmail) {
     return errors;
 }
 
-
-
-async function insert_info_qr_code(email, textContent, imagePath, audioPath, isLabelPrivate) {
+async function check_if_label_name_exists(email, labelName) {
     const db = await mysql.createConnection(config);
-    const sql = `CALL insert_to_qr_code(?, ?, ?, ?, ?)`;
+    try {
+        const checkLabelName = `CALL check_if_label_name_exists(?, ?)`;
+        const [existingLabel] = await db.query(checkLabelName, [labelName, email]);
+
+        console.log("Existing label result: ", existingLabel); // Log to verify the structure
+
+        if (existingLabel && existingLabel[0] && existingLabel[0][0]) {
+            const count = existingLabel[0][0]["label_count"];
+            return count > 0; // Returns true if the label name exists, false otherwise
+        }
+        return false; // If no data is found, the label does not exist
+    } finally {
+        await db.end(); // Ensure the database connection is closed
+    }
+}
+
+
+
+
+
+async function insert_info_qr_code(email, labelName, textContent, imagePath, audioPath, isLabelPrivate) {
+    const db = await mysql.createConnection(config);
+    const sql = `CALL insert_to_qr_code(?, ?, ?, ?, ?, ?)`;
 
     
-    const [rows] = await db.query(sql, [email, textContent, imagePath, audioPath, isLabelPrivate ]);
+    const [rows] = await db.query(sql, [email, labelName, textContent, imagePath, audioPath, isLabelPrivate ]);
     const labelId = rows[0][0].label_id;
     await db.end();
 
@@ -401,6 +421,7 @@ module.exports = {
     userLogIn,
     isEmailVerified,
     isEmailReg,
+    check_if_label_name_exists,
     insert_info_qr_code,
     get_label_by_id,
     insert_verification_code_label,
