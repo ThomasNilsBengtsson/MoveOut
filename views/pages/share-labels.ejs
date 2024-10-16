@@ -4,6 +4,9 @@
     <main id="share-label-form" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh;">
         <h1>Share Label with a User</h1>
 
+        <% if (errorMessage) { %>
+            <div class="alert alert-danger" style="color: red; margin-bottom: 20px;"><%= errorMessage %></div>
+        <% } %>
         <!-- Share Form for a Label -->
         <div class="share-label-form-container">
             <form action="/share-label" method="POST" class="share-label-form">

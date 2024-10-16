@@ -85,16 +85,19 @@ DELIMITER ;;
 CREATE PROCEDURE accept_shared_label(
     IN f_email VARCHAR(100),
     IN f_text_content TEXT,
-    IN f_image_path VARCHAR(255),
-    IN f_audio_path VARCHAR(255),
+    IN f_image_path JSON,
+    IN f_audio_path JSON,
     IN f_content_type ENUM('text', 'image', 'audio')
 )
 BEGIN
     INSERT INTO qr_code_labels (email, text_content, image_path, audio_path, content_type)
     VALUES (f_email, f_text_content, f_image_path, f_audio_path, f_content_type);
+    
+    SELECT LAST_INSERT_ID() AS newLabelId;
 END;;
 
 DELIMITER ;
+
 
 
 

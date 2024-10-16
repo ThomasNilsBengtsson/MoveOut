@@ -274,7 +274,7 @@ router.post('/create-label', isAuthenticated, upload.fields([
         backgroundImagePath = 'public/background-images/label-image-gray.png';
     }
 
-    const qrContent = ` https://8c74-2001-6b0-2a-c280-bdc1-f512-44f2-213.ngrok-free.app/label/${labelId}?email=${encodeURIComponent(email)}`; 
+    const qrContent = `https://85af-2001-6b0-2a-c280-bdc1-f512-44f2-213.ngrok-free.app/label/${labelId}?email=${encodeURIComponent(email)}`; 
     const qrImagePath = await qrFunctions.overlayQRCodeOnImage(qrContent, backgroundImagePath, email, labelId);
     const publicImagePath = '/' + path.relative('public', qrImagePath).replace(/\\/g, '/');
 
@@ -501,17 +501,27 @@ router.get('/share-labels', isAuthenticated, async (req, res) => {
 
 
         res.render('pages/share-labels.ejs', {
-            title: 'share label'
+            title: 'Share Label',
+            errorMessage: ""
         });
 });
 
 
 router.post('/share-label', async (req, res) => {
     try {
+        console.log("req body share-label post : ", req.body);
+
         const { recipientEmail, labelId } = req.body;
         const senderEmail = req.session.email; // Assuming you have the sender's email in the session.
-
+        const label = await moveout.get_label_by_id(labelId);
         // Call the stored procedure to share the label
+        if (label.is_label_private) {
+            return res.render('pages/share-labels.ejs', {
+                title: 'Share Label',
+                errorMessage: 'This label is private and cannot be shared.'
+            });
+        }
+        
         await moveout.shareLabel(labelId, senderEmail, recipientEmail);
 
         res.redirect('/home'); // Redirect to home after sharing the label.
@@ -571,15 +581,21 @@ router.post('/accept-label', isAuthenticated, async (req, res) => {
         }
 
         // Call the acceptSharedLabel function
-        await moveout.acceptSharedLabel(sharedId, recipientEmail);
-
+        const newLabelId = await moveout.acceptSharedLabel(sharedId, recipientEmail);
+        console.log("accept-label new label id :", newLabelId);
+        const backgroundImagePath = "public/background-images/label-image-black.png";
         // Redirect back to the inbox after accepting the label
+        const qrContent = `https://85af-2001-6b0-2a-c280-bdc1-f512-44f2-213.ngrok-free.app/label/${newLabelId}?email=${encodeURIComponent(recipientEmail)}`;
+        const qrImagePath = await qrFunctions.overlayQRCodeOnImage(qrContent, backgroundImagePath, recipientEmail, newLabelId);
+        const publicImagePath = '/' + path.relative('public', qrImagePath).replace(/\\/g, '/');
+
         res.redirect('/inbox');
     } catch (error) {
         console.error('Error accepting label:', error);
         res.status(500).send('Server error');
     }
 });
+
 
 
 

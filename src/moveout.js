@@ -296,7 +296,7 @@ async function deleteSharedLabel(sharedId) {
 }
 
 
-/* async function acceptSharedLabel(sharedId, recipientEmail) {
+async function acceptSharedLabel(sharedId, recipientEmail) {
     const db = await mysql.createConnection(config);
 
     try {
@@ -356,7 +356,7 @@ async function deleteSharedLabel(sharedId) {
                 const newImagePath = path.join('uploads', 'images', recipientEmail, uniqueSuffix + path.extname(imagePath));
                 const targetImagePath = path.join(baseDir, newImagePath);
                 fs.copyFileSync(oldImagePath, targetImagePath);
-                newImagePaths.push(newImagePath);
+                newImagePaths.push('/' + newImagePath);
             });
         }
 
@@ -367,12 +367,12 @@ async function deleteSharedLabel(sharedId) {
                 const newAudioPath = path.join('uploads', 'audio', recipientEmail, uniqueSuffix + path.extname(audioPath));
                 const targetAudioPath = path.join(baseDir, newAudioPath);
                 fs.copyFileSync(oldAudioPath, targetAudioPath);
-                newAudioPaths.push(newAudioPath);
+                newAudioPaths.push("/" + newAudioPath);
             });
         }
 
         // Insert the new label record into the qr_code_labels table for User B
-        await db.query('CALL accept_shared_label(?, ?, ?, ?, ?)', [
+        const[result] = await db.query('CALL accept_shared_label(?, ?, ?, ?, ?)', [
             recipientEmail,
             sharedLabel.text_content,
             JSON.stringify(newImagePaths),
@@ -382,109 +382,15 @@ async function deleteSharedLabel(sharedId) {
 
         console.log('Label accepted successfully.');
 
+        const newLabelId = result[0][0].newLabelId;
+        return newLabelId;
+
     } catch (error) {
         console.error('Error accepting shared label:', error);
     } finally {
         await db.end();
     }
-} */
-
-
-    const fs = require('fs');
-    const path = require('path');
-    const mysql = require('mysql2/promise');
-    const qrFunctions = require('./qrFunctions'); // Assuming this module is where you have your QR code generation logic
-    
-    async function acceptSharedLabel(sharedId, recipientEmail) {
-        const db = await mysql.createConnection(config);
-    
-        try {
-            // Step 1: Get the shared label information
-            const [rows] = await db.query('CALL get_shared_label_details(?)', [sharedId]);
-            const sharedLabel = rows[0][0];
-    
-            if (!sharedLabel) {
-                throw new Error('Shared label not found.');
-            }
-            
-            // Parse image and audio paths if they exist
-            let imagePaths = sharedLabel.image_path ? JSON.parse(sharedLabel.image_path) : [];
-            let audioPaths = sharedLabel.audio_path ? JSON.parse(sharedLabel.audio_path) : [];
-            
-            // Generate new paths for User B
-            const baseDir = path.resolve(__dirname, '../public/uploads');
-            const userDir = path.join(baseDir, recipientEmail);
-            if (!fs.existsSync(userDir)) {
-                fs.mkdirSync(userDir, { recursive: true });
-            }
-            
-            // Copy files if necessary
-            let newImagePaths = [];
-            let newAudioPaths = [];
-            
-            if (imagePaths.length > 0) {
-                imagePaths.forEach(imagePath => {
-                    const oldImagePath = path.join(baseDir, imagePath);
-                    const newImagePath = path.join('uploads', 'images', recipientEmail, path.basename(imagePath));
-                    const targetImagePath = path.join(baseDir, newImagePath);
-                    fs.copyFileSync(oldImagePath, targetImagePath);
-                    newImagePaths.push(newImagePath);
-                });
-            }
-            
-            if (audioPaths.length > 0) {
-                audioPaths.forEach(audioPath => {
-                    const oldAudioPath = path.join(baseDir, audioPath);
-                    const newAudioPath = path.join('uploads', 'audio', recipientEmail, path.basename(audioPath));
-                    const targetAudioPath = path.join(baseDir, newAudioPath);
-                    fs.copyFileSync(oldAudioPath, targetAudioPath);
-                    newAudioPaths.push(newAudioPath);
-                });
-            }
-    
-            // Step 3: Insert the new label record into the qr_code_labels table for User B
-            const [result] = await db.query('CALL accept_shared_label(?, ?, ?, ?, ?)', [
-                recipientEmail,
-                sharedLabel.text_content,
-                JSON.stringify(newImagePaths),
-                JSON.stringify(newAudioPaths),
-                sharedLabel.content_type
-            ]);
-    
-            // Step 4: Generate a new QR code for User B's label
-            const newLabelId = result.insertId;  // Assuming this gives you the new label ID
-            const userLabelsDir = path.join(__dirname, `../public/labels/${recipientEmail}`);
-            if (!fs.existsSync(userLabelsDir)) {
-                fs.mkdirSync(userLabelsDir, { recursive: true });
-            }
-    
-            let backgroundImagePath = null;
-            // Assuming label design is taken from sharedLabel or default to a certain one
-            if (sharedLabel.label_design === 'label1') {
-                backgroundImagePath = 'public/background-images/label-image-black.png';
-            } else if (sharedLabel.label_design === 'label2') {
-                backgroundImagePath = 'public/background-images/label-image-yellow.png';
-            } else if (sharedLabel.label_design === 'label3') {
-                backgroundImagePath = 'public/background-images/label-image-gray.png';
-            } else {
-                backgroundImagePath = 'public/background-images/label-image-black.png'; // Default design
-            }
-    
-            // Set the QR content with the new label ID for User B
-            const qrContent = `https://8c74-2001-6b0-2a-c280-bdc1-f512-44f2-213.ngrok-free.app/label/${newLabelId}?email=${encodeURIComponent(recipientEmail)}`; 
-            const qrImagePath = await qrFunctions.overlayQRCodeOnImage(qrContent, backgroundImagePath, recipientEmail, newLabelId);
-            
-            console.log(`QR Code generated at: ${qrImagePath}`);
-    
-            console.log('Label accepted successfully.');
-    
-        } catch (error) {
-            console.error('Error accepting shared label:', error);
-        } finally {
-            await db.end();
-        }
-    }
-    
+}
 
 
 
