@@ -189,6 +189,14 @@ async function insert_info_qr_code(email, labelName, textContent, imagePath, aud
     return labelId;
 }
 
+async function getLabelIdByName(labelName, email) {
+    const db = await mysql.createConnection(config);
+    const sql = `CALL get_label_id_by_name(?, ?)`;
+    const [rows] = await db.query(sql, [labelName, email]);
+    await db.end();
+    return rows[0];
+}
+
 
 async function get_label_by_id(labelId) {
     const db = await mysql.createConnection(config);
@@ -290,11 +298,11 @@ async function updateLabel(labelId, { text_content, image_path, audio_path, is_l
     return result;
 }
 
-async function shareLabel(labelId, senderEmail, recipientEmail) {
+async function shareLabel(labelId, labelName, senderEmail, recipientEmail) {
 
         const db = await mysql.createConnection(config);
-        const sql = `CALL share_label(?, ?, ?)`;
-        await db.query(sql, [labelId, senderEmail, recipientEmail]);
+        const sql = `CALL share_label(?, ?, ?, ?)`;
+        await db.query(sql, [labelId, labelName, senderEmail, recipientEmail]);
         await db.end();
 }
 
@@ -392,18 +400,23 @@ async function acceptSharedLabel(sharedId, recipientEmail) {
         }
 
         // Insert the new label record into the qr_code_labels table for User B
-        const[result] = await db.query('CALL accept_shared_label(?, ?, ?, ?, ?)', [
+        const[result] = await db.query('CALL accept_shared_label(?, ?, ?, ?, ?, ?)', [
             recipientEmail,
+            sharedLabel.label_name,
             sharedLabel.text_content,
             JSON.stringify(newImagePaths),
             JSON.stringify(newAudioPaths),
             sharedLabel.content_type
         ]);
 
-        console.log('Label accepted successfully.');
-
         const newLabelId = result[0][0].newLabelId;
-        return newLabelId;
+        const newLabelName = result[0][0].newLabelName;
+
+
+        return {
+            newLabelId,
+            newLabelName
+        };
 
     } catch (error) {
         console.error('Error accepting shared label:', error);
@@ -411,6 +424,29 @@ async function acceptSharedLabel(sharedId, recipientEmail) {
         await db.end();
     }
 }
+
+
+
+async function doesEmailExist(email) {
+    let db;
+    try {
+        // Establish database connection
+        db = await mysql.createConnection(config);
+
+        const [rows] = await db.query('CALL check_email_exists(?, @exists)', [email]);
+
+        const [result] = await db.query('SELECT @exists AS email_exists');
+
+        return result.length > 0 && result[0].email_exists === 1;
+
+    } catch (error) {
+        console.error('Error checking email existence:', error);
+        return false; // Assume false if there's an error
+    } finally {
+        if (db && db.end) await db.end();
+    }
+}
+
 
 
 
@@ -423,6 +459,7 @@ module.exports = {
     isEmailReg,
     check_if_label_name_exists,
     insert_info_qr_code,
+    getLabelIdByName,
     get_label_by_id,
     insert_verification_code_label,
     is_user_label_code_verified,
@@ -435,5 +472,6 @@ module.exports = {
     shareLabel,
     getSharedLabels,
     deleteSharedLabel,
-    acceptSharedLabel
+    acceptSharedLabel,
+    doesEmailExist
 };

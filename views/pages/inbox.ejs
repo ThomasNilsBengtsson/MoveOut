@@ -3,7 +3,7 @@
 <h2>Inbox</h2>
 <% sharedLabels.forEach(sharedLabel => { %>
     <div class="shared-label-item" style="border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; border-radius: 5px;">
-        <p>Shared ID: <%= sharedLabel.shared_id %></p> <!-- Debugging line -->
+        <p>Label Name: <%= sharedLabel.label_name %></p> <!-- Debugging line -->
         <p><strong>Label shared by:</strong> <%= sharedLabel.sender_email %></p>
         <p><strong>Shared date:</strong> <%= new Date(sharedLabel.shared_date).toLocaleString() %></p>
 

@@ -18,7 +18,7 @@ CREATE TABLE register (
 
 CREATE TABLE qr_code_labels (
     label_id INT AUTO_INCREMENT PRIMARY KEY,
-    label_name VARCHAR(20),
+    label_name VARCHAR(30),
     email VARCHAR(100),
     text_content TEXT,
     image_path VARCHAR(255),
@@ -42,6 +42,7 @@ ALTER TABLE qr_code_labels ADD CONSTRAINT unique_label_name UNIQUE (label_name);
 
 CREATE TABLE shared_labels (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    label_name VARCHAR(30),
     original_label_id INT NOT NULL, -- Refers to the original label shared by the sender
     sender_email VARCHAR(100) NOT NULL,
     recipient_email VARCHAR(100) NOT NULL,
@@ -60,7 +61,7 @@ DROP PROCEDURE IF EXISTS check_if_label_name_exists;
 DELIMITER ;;
 
 CREATE PROCEDURE check_if_label_name_exists(
-    IN f_label_name VARCHAR(15),
+    IN f_label_name VARCHAR(30),
     IN f_email VARCHAR(100)
 )
 BEGIN
@@ -82,7 +83,8 @@ CREATE PROCEDURE get_shared_label_details(
 )
 BEGIN
     SELECT 
-        l.label_id, 
+        l.label_id,
+        l.label_name, 
         l.text_content, 
         l.image_path, 
         l.audio_path, 
@@ -102,24 +104,41 @@ END;;
 DELIMITER ;
 
 
+
+
 DROP PROCEDURE IF EXISTS accept_shared_label;
 DELIMITER ;;
 
 CREATE PROCEDURE accept_shared_label(
     IN f_email VARCHAR(100),
+    IN f_label_name VARCHAR(30),
     IN f_text_content TEXT,
     IN f_image_path JSON,
     IN f_audio_path JSON,
     IN f_content_type ENUM('text', 'image', 'audio')
 )
 BEGIN
-    INSERT INTO qr_code_labels (email, text_content, image_path, audio_path, content_type)
-    VALUES (f_email, f_text_content, f_image_path, f_audio_path, f_content_type);
+    DECLARE new_label_name VARCHAR(50);
+    DECLARE suffix_counter INT DEFAULT 1;
+
+    SET new_label_name = CONCAT('shared: ', f_label_name);
+
+    -- Check for duplicate label names and append a suffix if necessary
+    WHILE EXISTS (SELECT 1 FROM qr_code_labels WHERE email = f_email AND label_name = new_label_name) DO
+        SET new_label_name = CONCAT('shared: ', f_label_name, ' (', suffix_counter, ')');
+        SET suffix_counter = suffix_counter + 1;
+    END WHILE;
+
+    -- Insert the new label with a unique name
+    INSERT INTO qr_code_labels (email, label_name, text_content, image_path, audio_path, content_type)
+    VALUES (f_email, new_label_name, f_text_content, f_image_path, f_audio_path, f_content_type);
     
-    SELECT LAST_INSERT_ID() AS newLabelId;
+    SELECT LAST_INSERT_ID() AS newLabelId, new_label_name AS newLabelName;
 END;;
 
 DELIMITER ;
+
+
 
 
 
@@ -147,9 +166,10 @@ CREATE PROCEDURE get_shared_labels(
 )
 BEGIN
     SELECT 
-        s.id AS shared_id, 
+        s.id AS shared_id,
         s.original_label_id, 
         l.label_id,
+        l.label_name,
         l.text_content, 
         l.image_path, 
         l.audio_path, 
@@ -174,12 +194,13 @@ DELIMITER ;;
 
 CREATE PROCEDURE share_label(
     IN f_label_id INT,
+    IN f_label_name VARCHAR(30),
     IN f_sender_email VARCHAR(100),
     IN f_recipient_email VARCHAR(100)
 )
 BEGIN
-    INSERT INTO shared_labels (original_label_id, sender_email, recipient_email)
-    VALUES (f_label_id, f_sender_email, f_recipient_email);
+    INSERT INTO shared_labels (original_label_id, label_name, sender_email, recipient_email)
+    VALUES (f_label_id, f_label_name, f_sender_email, f_recipient_email);
 END ;;
 
 DELIMITER ; 
@@ -188,50 +209,22 @@ DELIMITER ;
 
 
 
-/* DROP PROCEDURE IF EXISTS get_shared_labels;
+
+
+DROP PROCEDURE IF EXISTS get_label_id_by_name;
 DELIMITER ;;
 
-CREATE PROCEDURE get_shared_labels(
-    IN p_recipient_email VARCHAR(100)
+CREATE PROCEDURE get_label_id_by_name(
+    IN f_label_name VARCHAR(30),
+    IN f_email VARCHAR(100)
 )
 BEGIN
-    SELECT l.label_id, l.text_content, l.image_path, l.audio_path, l.content_type, s.sender_email, s.shared_date
-    FROM qr_code_labels l
-    INNER JOIN shared_labels s ON l.label_id = s.cloned_label_id
-    WHERE s.recipient_email = p_recipient_email;
-END ;;
-
-DELIMITER ; */
-
-
-
-
-/* DROP PROCEDURE IF EXISTS share_label;
-DELIMITER ;;
-
-CREATE PROCEDURE share_label(
-    IN f_label_id INT,
-    IN f_sender_email VARCHAR(100),
-    IN f_recipient_email VARCHAR(100)
-)
-BEGIN
-
-    DECLARE new_label_id INT;
-
-    INSERT INTO qr_code_labels (email, text_content, image_path, audio_path, content_type, is_label_private)
-    SELECT f_recipient_email, text_content, image_path, audio_path, content_type, is_label_private
+    SELECT label_id
     FROM qr_code_labels
-    WHERE label_id = f_label_id;
+    WHERE label_name = f_label_name AND email = f_email;
+END;;
 
-    SET new_label_id = LAST_INSERT_ID();
-
-    INSERT INTO shared_labels (original_label_id, cloned_label_id, sender_email, recipient_email)
-    VALUES (f_label_id, new_label_id, f_sender_email, f_recipient_email);
-END ;;
-
-DELIMITER ; 
- */
-
+DELIMITER ;
 
 
 

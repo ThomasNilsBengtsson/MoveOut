@@ -520,12 +520,33 @@ router.get('/share-labels', isAuthenticated, async (req, res) => {
 });
 
 
-router.post('/share-label', async (req, res) => {
+router.post('/share-label', isAuthenticated, async (req, res) => {
     try {
-        console.log("req body share-label post : ", req.body);
-
-        const { recipientEmail, labelId } = req.body;
+        const { recipientEmail, labelName } = req.body;
         const senderEmail = req.session.email; // Assuming you have the sender's email in the session.
+
+
+        const emailExists = await moveout.doesEmailExist(recipientEmail);
+        if (!emailExists) {
+            return res.render('pages/share-labels.ejs', {
+                title: 'Share Label',
+                errorMessage: 'User does not exist.'
+            });
+        }
+
+
+
+        const [rows] = await moveout.getLabelIdByName(labelName, senderEmail);
+        console.log('Rows returned by getLabelIdByName:', rows);
+        if (!rows || rows.length === 0) {
+            return res.render('pages/share-labels.ejs', {
+                title: 'Share Label',
+                errorMessage: 'Label not found. Please enter a valid label name.'
+            });
+        }
+
+        const labelId = rows.label_id;
+        //console.log(labelId);
         const label = await moveout.get_label_by_id(labelId);
         // Call the stored procedure to share the label
         if (label.is_label_private) {
@@ -535,7 +556,7 @@ router.post('/share-label', async (req, res) => {
             });
         }
         
-        await moveout.shareLabel(labelId, senderEmail, recipientEmail);
+        await moveout.shareLabel(labelId, labelName, senderEmail, recipientEmail);
 
         res.redirect('/home'); // Redirect to home after sharing the label.
     } catch (error) {
@@ -583,7 +604,18 @@ router.post('/discard-label', isAuthenticated, async (req, res) => {
 
 
 
+/* 
+Här fixa med overlayQRCoeOnImage så att den tar label namnet också sne så där inne hardcorda så att det står "share:"<namn>
+ändara ocks
 
+problem med att när man acceptar en label så kan man inte accepta dem igen för att de kommer ha samma namn, 
+kommer vara i databsen exempelvis med "shared: sharingV4" och namnet på labeln kommer bara vara sharingV4 inte shared: framför
+då det namnet uppdateras inte på frontend med "shared: "
+
+
+måste också testa vad som händer när ett orignellt namn som exmeplvis är 13 chars, ifall den delas 
+sedan läggs shared: till också kommer programmet att crasha då det går över 15 char limit
+*/
 router.post('/accept-label', isAuthenticated, async (req, res) => {
     try {
         const sharedId = req.body.shared_id; // Get the shared_id from the request body
@@ -593,19 +625,55 @@ router.post('/accept-label', isAuthenticated, async (req, res) => {
             throw new Error('Shared ID not found in the request.');
         }
 
-        // Call the acceptSharedLabel function
-        const newLabelId = await moveout.acceptSharedLabel(sharedId, recipientEmail);
-        console.log("accept-label new label id :", newLabelId);
+
+        const result = await moveout.acceptSharedLabel(sharedId, recipientEmail);
+        const newLabelId = result.newLabelId;
+        const newLabelName = result.newLabelName;
+
         const backgroundImagePath = "public/background-images/label-image-black.png";
         // Redirect back to the inbox after accepting the label
         const qrContent = `https://85af-2001-6b0-2a-c280-bdc1-f512-44f2-213.ngrok-free.app/label/${newLabelId}?email=${encodeURIComponent(recipientEmail)}`;
-        const qrImagePath = await qrFunctions.overlayQRCodeOnImage(qrContent, backgroundImagePath, recipientEmail, newLabelId);
+        const qrImagePath = await qrFunctions.overlayQRCodeOnImage(qrContent, backgroundImagePath, recipientEmail, newLabelId, newLabelName);
         const publicImagePath = '/' + path.relative('public', qrImagePath).replace(/\\/g, '/');
 
         res.redirect('/inbox');
     } catch (error) {
         console.error('Error accepting label:', error);
         res.status(500).send('Server error');
+    }
+});
+
+
+
+router.get('/print-label', isAuthenticated, async (req, res) => {
+
+
+    res.render('pages/print-label.ejs', {
+        title: 'Print Label',
+        errorMessage: ""
+    });
+});
+
+
+router.get('/get-label', isAuthenticated, async (req, res) => {
+    const labelName = req.query.name;
+    const email = req.session.email;
+
+    if (!labelName) {
+        return res.status(400).json({ success: false, message: 'Label name is required' });
+    }
+
+    // Get the label ID by its name for the specific user (identified by email)
+    const labelIdResult = await moveout.getLabelIdByName(labelName, email);
+    console.log("label-print labelIdResult : ", labelIdResult);
+    if (labelIdResult && labelIdResult.length > 0) {
+        const labelId = labelIdResult[0].label_id;
+        // Construct the image path using the email and label ID
+        const labelImagePath = `/labels/${email}/qr_code_${labelId}.png`;
+        console.log("labelImagePath : ", labelImagePath);
+        res.json({ success: true, label: { name: labelName, imagePath: labelImagePath } });
+    } else {
+        res.json({ success: false, message: 'Label not found' });
     }
 });
 
