@@ -209,35 +209,44 @@
 </form>
 
 <script>
+document.addEventListener('DOMContentLoaded', function () {
     const contentTypeSelect = document.getElementById("contentType");
     const textContentInput = document.getElementById("textContentInput");
     const imageContentInput = document.getElementById("imageContentInput");
     const audioContentInput = document.getElementById("audioContentInput");
 
-    contentTypeSelect.addEventListener("change", function() {
-        if (this.value === "text") {
+    // Function to handle content type change
+    function handleContentTypeChange() {
+        // Hide all inputs initially
+        textContentInput.style.display = "none";
+        imageContentInput.style.display = "none";
+        audioContentInput.style.display = "none";
+
+        // Show the selected input type
+        if (contentTypeSelect.value === "text") {
             textContentInput.style.display = "block";
-            imageContentInput.style.display = "none";
-            audioContentInput.style.display = "none";
-        } else if (this.value === "image") {
-            textContentInput.style.display = "none";
+        } else if (contentTypeSelect.value === "image") {
             imageContentInput.style.display = "block";
-            audioContentInput.style.display = "none";
-        } else if (this.value === "audio") {return res.status(400).json({ message: 'Label name must be unique. This label name already exists.' });
-            textContentInput.style.display = "none";
-            imageContentInput.style.display = "none";
+        } else if (contentTypeSelect.value === "audio") {
             audioContentInput.style.display = "block";
         }
-    });
+    }
+
+    // Attach event listener to content type dropdown
+    contentTypeSelect.addEventListener("change", handleContentTypeChange);
+
+    // Initialize the form with the correct content input visible
+    handleContentTypeChange();
+});
 
 
     const form = document.getElementById('createLabelForm');
-form.addEventListener('submit', async function (event) {
+    form.addEventListener('submit', async function (event) {
     event.preventDefault(); // Prevent default form submission
 
     const formData = new FormData(form);
 
-try {
+    try {
     const response = await fetch(form.action, {
         method: 'POST',
         body: formData,
@@ -245,16 +254,16 @@ try {
 
     if (!response.ok) {
         // If the server returns an error, extract and display the message
-        const result = await response.text();
+        const result = await response.json();
         document.getElementById('error-message').textContent = result;
     } else {
         // Proceed with the redirection that your backend handles (no additional code needed here)
         window.location.href = response.url; // Redirect as intended by backend
     }
-} catch (error) {
-    document.getElementById('error-message').textContent = 'An unexpected error occurred. Please try again.';
-}
-});
+    } catch (error) {
+    document.getElementById('error-message').textContent = 'Label name must be unique. This label name already exists.';
+    }
+    });
 
 </script>
 <%- include("./../partials/footer.ejs") %>
