@@ -1,163 +1,266 @@
 <%- include("./../partials/header.ejs") %>
 
 <style>
-    body {
-        font-family: Arial, sans-serif;
-        background-color: #f4f6f9;
-        margin: 0;
-        padding: 20px;
-    }
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f6f9;
+    margin: 0;
+    padding: 20px;
+}
 
-    .form-container {
-        background: #ffffff;
-        border-radius: 10px;
-        padding: 20px;
-        max-width: 600px;
-        margin: 20px auto;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        text-align: center;
-    }
+.form-container {
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 20px;
+    max-width: 600px;
+    margin: 20px auto;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
 
-    h1 {
-        color: #333;
-        text-align: center;
-        margin-bottom: 20px;
-    }
+h1 {
+    color: #333;
+    margin-bottom: 20px;
+}
 
-    label {
-        display: block;
-        margin-bottom: 8px;
-        font-weight: bold;
-        color: #555;
-        text-align: left;
-    }
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #555;
+    text-align: left;
+}
 
-    select, textarea, input[type="file"] {
-        width: 100%;
-        padding: 10px;
-        margin-bottom: 20px;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-        font-family: Arial, sans-serif;
-        font-size: 14px;
-    }
+select, textarea, input[type="file"] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+}
 
-    textarea {
-        height: 100px;
-        resize: vertical;
-    }
+textarea {
+    height: 100px;
+    resize: vertical;
+}
 
-    input[type="file"] {
-        border: none;
-        padding: 5px;
-    }
+.save-button, .delete-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
 
-    .action-buttons {
-        display: flex;
-        gap: 10px;
-        justify-content: center;
-        margin-top: 20px;
-    }
+.delete-button {
+    background-color: #dc3545;
+}
 
-    .form-buttons {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-    }
+.delete-button:hover {
+    background-color: #c82333;
+}
 
-    .delete-button-container {
-        text-align: center;
-        margin-top: 20px;
-    }
+.content-section {
+    margin-top: 30px;
+}
 
-    button {
-        background-color: #007bff;
-        color: white;
-        border: none;
-        padding: 12px 20px;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 16px;
-        transition: background-color 0.3s ease;
-    }
+.files-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+    margin-top: 15px;
+}
 
-    button:hover {
-        background-color: #0056b3;
-    }
+.file-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    width: 120px;
+    margin-bottom: 20px;
+}
 
-    .delete-button {
-        background-color: #dc3545;
-        margin-top: 10px;
-    }
+.file-preview, .audio-player {
+    max-width: 100%;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
 
-    .delete-button:hover {
-        background-color: #c82333;
-    }
+.audio-player {
+    width: 100%;
+    margin-bottom: 10px;
+}
 
-    .back-link {
-        display: block;
-        margin-top: 10px;
-        color: #007bff;
-        text-decoration: none;
-    }
+.delete-file-form {
+    margin-top: 5px;
+}
 
-    .back-link:hover {
-        text-decoration: underline;
-    }
+.delete-button-file {
+    background-color: #ff6b6b; 
+    color: white;
+    border: none;
+    padding: 6px 12px; 
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 13px; 
+    transition: background-color 0.3s ease;
+    margin-top: 5px; 
+}
 
-    .toggle-container {
-        display: flex;
-        align-items: center;
-        justify-content: start;
-        gap: 10px;
-        margin-bottom: 20px;
-    }
+.delete-button-file:hover {
+    background-color: #ff4c4c;
+}
 
-    .toggle-label {
-        font-weight: bold;
-        color: #555;
-    }
+.delete-button-label {
+    background-color: #dc3545; 
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 15px;
+    transition: background-color 0.3s ease;
+}
+
+.delete-button-label:hover {
+    background-color: #c82333;
+}
+
+.back-link {
+    display: block;
+    margin-top: 20px;
+    color: #007bff;
+    text-decoration: none;
+}
+
+.back-link:hover {
+    text-decoration: underline;
+}
+
 </style>
+
 
 <div class="form-container">
     <h1>Edit Label</h1>
+
     <form id="editLabelForm" action="/label/<%= label.label_id %>/edit" method="POST" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="contentType">Select Content Type to Edit:</label>
+            <select name="contentType" id="contentType" required>
+                <option value="text" <% if (label.content_type === 'text') { %>selected<% } %>>Text</option>
+                <option value="image" <% if (label.content_type === 'image') { %>selected<% } %>>Image</option>
+                <option value="audio" <% if (label.content_type === 'audio') { %>selected<% } %>>Audio</option>
+            </select>
+        </div>
 
-
-        <label for="contentType">Select Content Type to Edit:</label>
-        <select name="contentType" id="contentType" required>
-            <option value="text" <% if (label.content_type === 'text') { %>selected<% } %>>Text</option>
-            <option value="image" <% if (label.content_type === 'image') { %>selected<% } %>>Image</option>
-            <option value="audio" <% if (label.content_type === 'audio') { %>selected<% } %>>Audio</option>
-        </select>
-
-        <div id="textContentInput" style="display: none;">
+        <div class="form-group" id="textContentInput" style="display: none;">
             <label for="textContent">Edit Text Content:</label>
             <textarea name="textContent" id="textContent"><%= label.text_content %></textarea>
         </div>
 
-        <div id="imageContentInput" style="display: none;">
+        <div class="form-group" id="imageContentInput" style="display: none;">
             <label for="imageContent">Upload New Image:</label>
             <input type="file" name="imageContent" id="imageContent" accept="image/*" multiple>
         </div>
 
-        <div id="audioContentInput" style="display: none;">
+        <div class="form-group" id="audioContentInput" style="display: none;">
             <label for="audioContent">Upload New Audio:</label>
             <input type="file" name="audioContent" id="audioContent" accept="audio/*" multiple>
         </div>
 
-        <label for="isLabelPrivate">
-            <input type="checkbox" name="isLabelPrivate" value="on" <% if (label.is_label_private) { %>checked<% } %>> Private
-        </label>
+        <div class="form-group">
+            <label for="isLabelPrivate">
+                <input type="checkbox" name="isLabelPrivate" value="on" <% if (label.is_label_private) { %>checked<% } %>> Private
+            </label>
+        </div>
 
-        <div class="form-buttons">
-            <button type="submit">Save Changes</button>
+        
+        <div class="form-group">
+            <button type="submit" class="save-button">Save Changes</button>
         </div>
     </form>
 
+
+    <div class="content-section">
+        <h3>Current Images</h3>
+        <% let images = []; 
+            if (label.image_path && label.image_path !== 'null') {
+                try { 
+                    images = JSON.parse(label.image_path);
+                    if (!Array.isArray(images)) {
+                        images = [label.image_path];
+                    }
+                } catch (e) {
+                    images = [label.image_path];
+                }
+            }
+        %>
+        <% if (images.length > 0) { %>
+            <div class="files-container">
+                <% images.forEach(function(image) { %>
+                    <div class="file-item">
+                        <img src="<%= image %>" alt="Image" class="file-preview">
+                       
+                        <form action="/label/<%= label.label_id %>/delete-file" method="POST" class="delete-file-form">
+                            <input type="hidden" name="filePath" value="<%= image %>">
+                            <input type="hidden" name="contentType" value="image">
+                            <button type="submit" class="delete-button-file" onclick="return confirm('Are you sure you want to delete this image?')">Delete File</button>
+                        </form>
+                    </div>
+                <% }) %>
+            </div>
+        <% } else { %>
+            <p>No images available.</p>
+        <% } %>
+    </div>
+
+
+    <div class="content-section">
+        <h3>Current Audio Files</h3>
+        <% let audios = []; 
+            if (label.audio_path && label.audio_path !== 'null') {
+                try { 
+                    audios = JSON.parse(label.audio_path);
+                    if (!Array.isArray(audios)) {
+                        audios = [label.audio_path];
+                    }
+                } catch (e) {
+                    audios = [label.audio_path];
+                }
+            }
+        %>
+        <% if (audios.length > 0) { %>
+            <div class="files-container">
+                <% audios.forEach(function(audio) { %>
+                    <div class="file-item">
+                        <audio controls class="audio-player">
+                            <source src="<%= audio %>" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                        
+                        <form action="/label/<%= label.label_id %>/delete-file" method="POST" class="delete-file-form">
+                            <input type="hidden" name="filePath" value="<%= audio %>">
+                            <input type="hidden" name="contentType" value="audio">
+                            <button type="submit" class="delete-button-file" onclick="return confirm('Are you sure you want to delete this audio?')">Delete File</button>
+                        </form>
+                    </div>
+                <% }) %>
+            </div>
+        <% } else { %>
+            <p>No audio files available.</p>
+        <% } %>
+    </div>
+
+  
     <div class="delete-button-container">
         <form action="/label/<%= label.label_id %>/delete" method="POST">
-            <button type="submit" class="delete-button" onclick="return confirm('Are you sure you want to delete this label?')">Delete</button>
+            <button type="submit" class="delete-button-label" onclick="return confirm('Are you sure you want to delete this label?')">Delete Label</button>
         </form>
     </div>
 
@@ -179,7 +282,7 @@
 
         contentType.addEventListener('change', toggleContentInputs);
 
-        // Initialize the form with the correct content input visible
+      
         toggleContentInputs();
     });
 

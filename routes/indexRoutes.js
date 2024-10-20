@@ -294,10 +294,6 @@ router.post('/create-label', isAuthenticated, upload.fields([
     const isLabelPrivate = req.body.isLabelPrivate === "on";
     const labelName = req.body.labelName;
 
-    
-
-
-
     let textContent = null;
     let userImagePath = null;
     let userAudioPath = null;
@@ -307,12 +303,14 @@ router.post('/create-label', isAuthenticated, upload.fields([
     } 
     else if (contentType === "image"){
         imagePath = `/uploads/images/${email}/` + req.files.imageContent[0].filename;
-        userImagePath = JSON.stringify(imagePath);
+        userImagePath = JSON.stringify([imagePath]);
     }
     else if(contentType === "audio"){
         audioPath = `/uploads/audio/${email}/` + req.files.audioContent[0].filename;
-        userAudioPath = JSON.stringify(audioPath);
+        userAudioPath = JSON.stringify([audioPath]);
     }
+
+
 
     const labelExists = await moveout.check_if_label_name_exists(email, labelName);
 
@@ -556,6 +554,91 @@ router.post('/label/:labelId/delete', isAuthenticated, async (req, res) => {
     await moveout.deleteLabel(labelId)
     res.redirect("/home");     
 });
+
+
+
+
+router.post('/label/:labelId/delete-file', isAuthenticated, async (req, res) => {
+
+    console.log('Delete file route hit');
+    const labelId = req.params.labelId;
+    const email = req.session.email;
+    const { filePath, contentType } = req.body;
+
+    console.log('Request body:', req.body);
+    console.log('Label ID:', labelId);
+    console.log('Email:', email);
+
+    const existingLabel = await moveout.getSpecificLabelByUser(labelId, email);
+    console.log('Existing label:', existingLabel);
+
+    if (!existingLabel) {
+        return res.status(404).send('Label not found.');
+    }
+
+    let imagePaths = [];
+    let audioPaths = [];
+
+    if (existingLabel.image_path && existingLabel.image_path !== 'null') {
+        if (typeof existingLabel.image_path === 'string') {
+            try {
+                imagePaths = JSON.parse(existingLabel.image_path);
+            } catch (error) {
+                console.error('Failed to parse image_path as JSON:', error);
+                return res.status(500).send('An error occurred while parsing image paths.');
+            }
+        } else if (Array.isArray(existingLabel.image_path)) {
+            imagePaths = existingLabel.image_path;
+        }
+    }
+
+    if (existingLabel.audio_path && existingLabel.audio_path !== 'null') {
+        if (typeof existingLabel.audio_path === 'string') {
+            try {
+                audioPaths = JSON.parse(existingLabel.audio_path);
+            } catch (error) {
+                console.error('Failed to parse audio_path as JSON:', error);
+                return res.status(500).send('An error occurred while parsing audio paths.');
+            }
+        } else if (Array.isArray(existingLabel.audio_path)) {
+            audioPaths = existingLabel.audio_path;
+        }
+    }
+
+    
+    if (contentType === 'image') {
+        imagePaths = imagePaths.filter(path => path !== filePath);
+    } else if (contentType === 'audio') {
+        audioPaths = audioPaths.filter(path => path !== filePath);
+    }
+
+
+    if (filePath) {
+        try {
+            const fullPath = path.join(__dirname, '..', 'public', filePath);
+            await fs.promises.unlink(fullPath);
+            console.log(`Deleted file from file system: ${fullPath}`);
+        } catch (err) {
+            console.error(`Failed to delete file from file system: ${filePath}`, err);
+        }
+    }
+
+    
+    const imagePathsJson = imagePaths.length > 0 ? JSON.stringify(imagePaths) : null;
+    const audioPathsJson = audioPaths.length > 0 ? JSON.stringify(audioPaths) : null;
+
+
+    await moveout.updateLabel(labelId, {
+        image_path: imagePathsJson,
+        audio_path: audioPathsJson
+    });
+
+    console.log('File deleted from label and database updated.');
+    console.log('Redirecting to edit label page...');
+    res.redirect(`/label/${labelId}/edit`);
+
+});
+
 
 
 router.get('/share-labels', isAuthenticated, async (req, res) => {
