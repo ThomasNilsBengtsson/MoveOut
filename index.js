@@ -7,6 +7,7 @@ const app = express();
 const port = 3000;
 const indexRoutes = require("./routes/indexRoutes.js");
 const session = require('express-session');
+require('./inactiveUsers/inactiveUsers.js');
 
 // Log message for starting the server
 console.log('Attempting to start the server...');
@@ -28,4 +29,3 @@ app.use(indexRoutes);
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
 });
-

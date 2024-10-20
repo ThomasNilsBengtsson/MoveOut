@@ -2,8 +2,8 @@
 <body>
     <main id="main-holder">
       <h1 id="login-header">Register</h1>
-    
 
+      <!-- Existing Manual Registration Form -->
       <form id="login-form" method="post">
         <input type="text" name="f_email" id="username-field" class="login-form-field" placeholder="Email" value="<%= formData ? formData.f_email : '' %>">
         <% if (errors && errors.email) { %>
@@ -18,17 +18,17 @@
           <div class="error-message" style="color: red;"><%= errors.isEmailReg %></div>
         <% } %>
 
-
         <input type="password" name="f_user_password" id="password-field" class="login-form-field" placeholder="Password">
         <% if (errors && errors.password) { %>
           <div class="error-message" style="color: red;"><%= errors.password %></div>
         <% } %>
         <input type="submit" value="Register" id="login-form-submit">
+
         <a>Already have an account?</a>
         <a href="/login">Log in</a>
       </form> 
+
       
     </main>
-  </body>
-
+</body>
 <%- include("./../partials/footer.ejs") %>

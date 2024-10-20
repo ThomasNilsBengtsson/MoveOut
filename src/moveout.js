@@ -25,6 +25,26 @@ async function registerUser(data, verificationToken) {
     await db.end();
 }
 
+async function insertGoogleRegister(email, password, verify, googleAccount) {
+    const db = await mysql.createConnection(config);
+    let sql = `CALL insert_google_register(?, ?, ?)`;
+    await db.query(sql, [email, password, verify, googleAccount]);
+    await db.end();
+}
+
+
+async function isGoogleRegistered(email) {
+    const db = await mysql.createConnection(config);
+    let sql = `CALL is_google_registered(?)`;
+    const [results] = await db.query(sql, [email]);
+    await db.end();
+    if (results && results[0]) {
+        const googleRegistered = results[0].google_registered;
+        return googleRegistered === 1;
+    } else {
+        return false;
+    }
+}
 
 
 async function userVerificationByToken(verificationToken)
@@ -448,11 +468,113 @@ async function doesEmailExist(email) {
 }
 
 
+async function deactivateAccount(email)
+{
+    const db = await mysql.createConnection(config);
+    const sql = `CALL deactivate_account(?)`;
+    const [rows] = await db.query(sql, [email]);
+
+    if (rows[0].account_that_deactivated === 0)
+    {
+        throw new Error('No account with this email was found');
+    }
+
+    await db.end();
+}
+
+
+async function accountDeactivationStatus(email)
+{
+    const db = await mysql.createConnection(config);
+    await db.query('CALL account_deactivation_status(?, @account_status)', [email]);
+    const [rows] = await db.query('SELECT @account_status AS is_active');
+    await db.end();
+    return rows[0].is_active === 1;
+ 
+}
+
+
+async function deleteAccount(email)
+{
+    const db = await mysql.createConnection(config);
+    const sql = `CALL delete_user_account(?)`;
+    await db.query(sql, [email]);
+
+    const baseDir = path.resolve(__dirname, '../public');
+
+
+    const userImageDir = path.join(baseDir, 'uploads/images', email);
+    const userAudioDir = path.join(baseDir, 'uploads/audio', email);
+    const userLabelsDir = path.join(baseDir, 'labels', email);
+
+    function deleteDirectory(dirPath) {
+        if (fs.existsSync(dirPath)) {
+            fs.readdirSync(dirPath).forEach((file) => {
+                const currentPath = path.join(dirPath, file);
+                if (fs.lstatSync(currentPath).isDirectory()) {
+                    deleteDirectory(currentPath);
+                } else {
+                    fs.unlinkSync(currentPath);
+                }
+            });
+            fs.rmdirSync(dirPath); 
+        }
+    }
+    deleteDirectory(userImageDir);
+    deleteDirectory(userAudioDir);
+    deleteDirectory(userLabelsDir);
+}
+
+
+
+
+async function insertDeleteToken(email, deleteToken, deleteTokenExpires)
+{
+    const db = await mysql.createConnection(config);
+    const sql = `CALL insert_delete_token(?, ?, ?)`;
+    await db.query(sql, [email, deleteToken, deleteTokenExpires]);
+    await db.end();
+}
+
+
+
+async function verifyDeleteToken(token) {
+    const db = await mysql.createConnection(config);
+    const sql = `CALL verify_delete_token(?)`;
+    const [rows] = await db.query(sql, [token]);
+
+    await db.end();
+
+    if (rows.length > 0 && rows[0].length > 0) {
+        return rows[0][0].email;
+    } else {
+        return null; 
+    }
+
+}
+
+
+async function updateLastLogin(email) {
+    const db = await mysql.createConnection(config);
+    const sql = `CALL update_last_login(?)`;
+    await db.query(sql, [email]);
+    await db.end();
+}
+
+
+
+async function getInactiveUsers() {
+    const db = await mysql.createConnection(config);
+    const [rows] = await db.query('CALL get_inactive_users()');
+    return rows[0];  
+}
 
 
 
 module.exports = {
     "registerUser": registerUser,
+    insertGoogleRegister,
+    isGoogleRegistered,
     userVerificationByToken,
     userLogIn,
     isEmailVerified,
@@ -473,5 +595,12 @@ module.exports = {
     getSharedLabels,
     deleteSharedLabel,
     acceptSharedLabel,
-    doesEmailExist
+    doesEmailExist,
+    deactivateAccount,
+    accountDeactivationStatus,
+    deleteAccount,
+    insertDeleteToken,
+    verifyDeleteToken,
+    updateLastLogin,
+    getInactiveUsers
 };

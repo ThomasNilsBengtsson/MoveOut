@@ -1,0 +1,15 @@
+<%- include("./../partials/header.ejs") %>
+
+<main id="profile-page" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh;">
+    <h1>User Profile</h1>
+
+    <div class="profile-info" style="width: 50%; text-align: center; border: 1px solid #ddd; padding: 20px; border-radius: 10px;">
+        <p><strong>Email:</strong> <%= email %></p>
+       
+        <form action="/deactivate-account" method="POST" onsubmit="return confirm('Are you sure you want to deactivate your account?')">
+            <button type="submit" class="deactivate-button" style="background-color: #e74c3c; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Deactivate Account</button>
+        </form>
+    </div>
+</main>
+
+<%- include("./../partials/footer.ejs") %>

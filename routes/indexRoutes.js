@@ -12,6 +12,13 @@ const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
 const { glob } = require('glob'); 
+const crypto = require('crypto');
+/* const { auth } = require('express-openid-connect');
+const authConfig = require('../authConfig'); */
+
+
+
+
 
 
 const storage = multer.diskStorage({
@@ -50,6 +57,7 @@ const upload = multer({
         }
     }
 });
+
 
 router.get("/login", (req, res) => {
     let data = {
@@ -113,13 +121,53 @@ router.post("/register", async (req, res) => {
     }
     else
     {
-            await moveout.registerUser(req.body, verificationToken);
-            res.redirect("/login");
+        await moveout.registerUser(req.body, verificationToken);
+        res.redirect("/login");
 
-            const verificationLink = `${process.env.BASE_URL}/email-verified?token=${verificationToken}&email=${encodeURIComponent(email)}`;
-            await emailFunctions.sendVerificationEmail(email, verificationLink);
+        const verificationLink = `${process.env.BASE_URL}/email-verified?token=${verificationToken}&email=${encodeURIComponent(email)}`;
+        await emailFunctions.sendVerificationEmail(email, verificationLink);
     }   
 });
+
+/* router.get('/register-with-google', auth(authConfig), (req, res) => {
+    console.log("Register with Google route accessed.");
+    console.log("req.oidc:", req.oidc); // Log req.oidc to see if it's defined
+   // console.log(" req : ", req);
+    if (req.oidc && req.oidc.login) {
+        // Initiate Google login via Auth0
+        req.oidc.login({ returnTo: '/callback' });
+      } else {
+        console.error('OIDC object is not available');
+        res.status(500).send('Internal Server Error: OIDC is not available');
+      }
+});  */
+
+/* 
+router.get('/callback', auth(authConfig), async (req, res) => {
+    console.log("Callback route accessed.");
+    console.log("req.oidc:", req.oidc); // Log req.oidc to see if it's defined
+    console.log("req.oidc.user:", req.oidc ? req.oidc.user : 'undefined'); // Log user profile if available
+    
+    const userProfile = req.oidc.user; // User profile from Auth0
+    const email = userProfile.email;
+
+  
+        const [results] = await moveout.doesEmailExist(email);
+
+        if (results.length > 0) {
+            req.session.email = email; 
+            return res.redirect('/home'); 
+        } else {
+
+            await moveout.insertGoogleRegister(email, null, true, true);
+
+            req.session.email = email; 
+            return res.redirect('/home'); 
+        }
+});
+ */
+
+
 
 
 router.get("/email-verified", async (req, res) => {
@@ -523,8 +571,7 @@ router.get('/share-labels', isAuthenticated, async (req, res) => {
 router.post('/share-label', isAuthenticated, async (req, res) => {
     try {
         const { recipientEmail, labelName } = req.body;
-        const senderEmail = req.session.email; // Assuming you have the sender's email in the session.
-
+        const senderEmail = req.session.email;
 
         const emailExists = await moveout.doesEmailExist(recipientEmail);
         if (!emailExists) {
@@ -546,9 +593,9 @@ router.post('/share-label', isAuthenticated, async (req, res) => {
         }
 
         const labelId = rows.label_id;
-        //console.log(labelId);
+ 
         const label = await moveout.get_label_by_id(labelId);
-        // Call the stored procedure to share the label
+
         if (label.is_label_private) {
             return res.render('pages/share-labels.ejs', {
                 title: 'Share Label',
@@ -558,7 +605,7 @@ router.post('/share-label', isAuthenticated, async (req, res) => {
         
         await moveout.shareLabel(labelId, labelName, senderEmail, recipientEmail);
 
-        res.redirect('/home'); // Redirect to home after sharing the label.
+        res.redirect('/home'); 
     } catch (error) {
         console.error('Error sharing label:', error);
         res.status(500).send('An error occurred while sharing the label.');
@@ -568,12 +615,12 @@ router.post('/share-label', isAuthenticated, async (req, res) => {
 
 router.get('/inbox', isAuthenticated, async (req, res) => {
     try {
-        const recipientEmail = req.session.email;  // Assuming you store user email in session
+        const recipientEmail = req.session.email;  
         const sharedLabels = await moveout.getSharedLabels(recipientEmail);
-        //console.log("sharedlabels  :",sharedLabels);
+
         res.render("pages/inbox.ejs", { 
             sharedLabels,
-            title: 'Inbox'  // Adding a title for the inbox page
+            title: 'Inbox'  
         });
     } catch (error) {
         console.error('Error retrieving shared labels:', error);
@@ -590,11 +637,8 @@ router.post('/discard-label', isAuthenticated, async (req, res) => {
         if (!sharedId) {
             throw new Error('Shared ID not found in the request.');
         }
-
-        // Call the deleteSharedLabel function
+        
         await moveout.deleteSharedLabel(sharedId);
-
-        // Redirect back to inbox after deleting
         res.redirect('/inbox');
     } catch (error) {
         console.error('Error discarding label:', error);
@@ -618,8 +662,8 @@ sedan läggs shared: till också kommer programmet att crasha då det går över
 */
 router.post('/accept-label', isAuthenticated, async (req, res) => {
     try {
-        const sharedId = req.body.shared_id; // Get the shared_id from the request body
-        const recipientEmail = req.session.email; // Get the recipient's email from the session
+        const sharedId = req.body.shared_id; 
+        const recipientEmail = req.session.email; 
 
         if (!sharedId) {
             throw new Error('Shared ID not found in the request.');
@@ -631,7 +675,7 @@ router.post('/accept-label', isAuthenticated, async (req, res) => {
         const newLabelName = result.newLabelName;
 
         const backgroundImagePath = "public/background-images/label-image-black.png";
-        // Redirect back to the inbox after accepting the label
+
         const qrContent = `https://85af-2001-6b0-2a-c280-bdc1-f512-44f2-213.ngrok-free.app/label/${newLabelId}?email=${encodeURIComponent(recipientEmail)}`;
         const qrImagePath = await qrFunctions.overlayQRCodeOnImage(qrContent, backgroundImagePath, recipientEmail, newLabelId, newLabelName);
         const publicImagePath = '/' + path.relative('public', qrImagePath).replace(/\\/g, '/');
@@ -647,7 +691,6 @@ router.post('/accept-label', isAuthenticated, async (req, res) => {
 
 router.get('/print-label', isAuthenticated, async (req, res) => {
 
-
     res.render('pages/print-label.ejs', {
         title: 'Print Label',
         errorMessage: ""
@@ -662,13 +705,10 @@ router.get('/get-label', isAuthenticated, async (req, res) => {
     if (!labelName) {
         return res.status(400).json({ success: false, message: 'Label name is required' });
     }
-
-    // Get the label ID by its name for the specific user (identified by email)
     const labelIdResult = await moveout.getLabelIdByName(labelName, email);
     console.log("label-print labelIdResult : ", labelIdResult);
     if (labelIdResult && labelIdResult.length > 0) {
         const labelId = labelIdResult[0].label_id;
-        // Construct the image path using the email and label ID
         const labelImagePath = `/labels/${email}/qr_code_${labelId}.png`;
         console.log("labelImagePath : ", labelImagePath);
         res.json({ success: true, label: { name: labelName, imagePath: labelImagePath } });
@@ -678,8 +718,89 @@ router.get('/get-label', isAuthenticated, async (req, res) => {
 });
 
 
+router.get('/profile', isAuthenticated, async (req, res) => {
+
+    const email = req.session.email;
+    res.render('pages/profile.ejs', {
+        title: 'Profile',
+        email 
+    });
+});
 
 
+
+router.post('/deactivate-account', isAuthenticated, async (req, res) => {
+        const email = req.session.email; 
+        await moveout.deactivateAccount(email);
+        const messageConfirmation = 'Your account has been deactivated';
+        res.render('pages/account-deactivated.ejs', {
+            title: 'Account Deactivated',
+            messageConfirmation
+        });
+});
+
+
+router.post('/delete-account-request', isAuthenticated, async (req, res) => {
+
+    const email = req.session.email;
+
+    const deleteToken = crypto.randomBytes(32).toString('hex');
+    const deleteTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); 
+
+    await moveout.insertDeleteToken(email, deleteToken, deleteTokenExpires);
+    const deleteUrl = `${process.env.BASE_URL}/confirm-delete-account?token=${deleteToken}`;
+
+    await emailFunctions.sendDeleteAccountLink(email, deleteUrl);
+
+    const message = 'A confirmation email has been sent to your email address.'
+    res.render('pages/delete-request-success.ejs', {
+        title: 'Delete Account Requested',
+        message
+    });
+
+});
+
+
+/* 
+måste fixa coden som är ut kommenterad
+just nu så verkar console.loggen för token komma upp i flödet
+*/
+router.get('/confirm-delete-account', async (req, res) => {
+    const { token } = req.query;
+    const email = await moveout.verifyDeleteToken(token);
+
+    if (!email) {
+        return res.render('pages/error-deletion-token.ejs', {
+            title: 'Expired Token',
+            message: 'The deletion link is invalid or has expired. Please try again.'
+        });
+    }
+
+    await moveout.deleteAccount(email);
+
+    if (req.session.email === email) {
+        req.session.destroy(err => {
+            if (err) {
+                console.error('Error destroying session:', err);
+                return res.status(500).send('Error occurred while logging out.');
+            }
+            res.render('pages/account-deleted-success.ejs', {
+                title: 'Account Deleted',
+                message: 'Your account has been successfully deleted. You have been logged out.'
+            });
+        });
+    } else {
+        res.render('pages/account-deleted-success.ejs', {
+            title: 'Account Deleted',
+            message: 'The account has been successfully deleted.'
+        });
+    }
+});
+
+
+/* 
+add is authenticated?
+*/
 router.post('/logout', (req, res) => {
     req.session.destroy(err => {
         if (err) {

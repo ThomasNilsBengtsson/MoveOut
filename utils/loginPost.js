@@ -8,29 +8,30 @@ async function loginPost(req, res) {
     const email = req.body.f_email;
     const password = req.body.f_user_password;
     
-/*     const userExists = await moveout.isUserExists(email);
-    if (!userExists.success) {
-        data.error.invalid = userExists.message; // This will be "User not found"
-        return res.render("pages/login.ejs", data);
-    } */
-
-
-    // Step 2: Validate the user's credentials
     const result = await moveout.userLogIn(email, password);
     if (!result.success) {
         data.error.invalid = "Invalid email or password.";
         return res.render("pages/login.ejs", data);
     }
 
-    // Step 3: Check if the email is verified
     const verifiedEmail = await moveout.isEmailVerified(email);
     if (!verifiedEmail.success) {
         data.error.invalid = "Please verify your email before logging in.";
         return res.render("pages/login.ejs", data);
     }
 
-    // Step 4: Successful login - set session and redirect to home page
-    req.session.email = email;
+    const activatedAccount = await moveout.accountDeactivationStatus(email);
+    console.log("activated account: ", activatedAccount);
+    if (activatedAccount === false )
+    {
+        console.log("if statment deactiavtedaccount : hello");
+        data.error.invalid = 'Account it decactivated. Contact support to activate the account';
+        return res.render('pages/login.ejs', data);
+    }
+
+    
+    req.session.email = email;  
+    await moveout.updateLastLogin(req.session.email);
     return res.redirect("/home");
 }
 

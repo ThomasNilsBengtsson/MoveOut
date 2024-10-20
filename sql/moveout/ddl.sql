@@ -15,6 +15,19 @@ CREATE TABLE register (
 );
 
 
+ALTER TABLE register
+ADD COLUMN is_active BOOLEAN DEFAULT TRUE,
+ADD COLUMN deactivated_at DATETIME NULL,
+ADD COLUMN deleteToken VARCHAR(64),
+ADD COLUMN deleteTokenExpires DATETIME,
+ADD COLUMN last_login DATETIME;
+
+
+
+ALTER TABLE register
+ADD COLUMN google_registered BOOLEAN NOT NULL DEFAULT FALSE;
+
+
 
 CREATE TABLE qr_code_labels (
     label_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -55,6 +68,154 @@ CREATE TABLE shared_labels (
 --
 --Procedures
 --
+
+
+
+DROP PROCEDURE IF EXISTS update_last_login;
+DELIMITER ;;
+
+CREATE PROCEDURE update_last_login(
+    IN f_email VARCHAR(100)
+)
+BEGIN
+    UPDATE register
+    SET last_login = NOW()
+    WHERE email = f_email;
+END;;
+
+DELIMITER ;
+
+
+
+DROP PROCEDURE IF EXISTS get_inactive_users;
+DELIMITER ;;
+
+CREATE PROCEDURE get_inactive_users()
+BEGIN
+    SELECT email, last_login
+    FROM register
+    WHERE is_active = TRUE AND (last_login IS NULL OR last_login < NOW() - INTERVAL 30 DAY);
+END;;
+
+DELIMITER ;
+
+
+
+
+DROP PROCEDURE IF EXISTS verify_delete_token;
+DELIMITER ;;
+
+CREATE PROCEDURE verify_delete_token(
+    IN f_token VARCHAR(64)
+)
+BEGIN
+    SELECT email 
+    FROM register
+    WHERE deleteToken = f_token
+    AND deleteTokenExpires > NOW();
+END;;
+
+DELIMITER ;
+
+
+
+
+
+DROP PROCEDURE IF EXISTS insert_delete_token;
+DELIMITER ;;
+
+CREATE PROCEDURE insert_delete_token(
+    IN f_email VARCHAR(100),
+    IN f_delete_token VARCHAR(64),
+    IN f_delete_token_expires DATETIME
+)
+BEGIN
+    UPDATE register
+    SET deleteToken = f_delete_token,
+        deleteTokenExpires = f_delete_token_expires
+    WHERE email = f_email;
+END ;;
+
+DELIMITER ;
+
+
+
+DROP PROCEDURE IF EXISTS delete_user_account;
+DELIMITER ;; 
+
+CREATE PROCEDURE delete_user_account(
+    IN f_email VARCHAR(100)
+)
+BEGIN
+    DELETE FROM qr_code_labels WHERE email = f_email;
+    DELETE FROM register WHERE email = f_email;
+END ;;
+
+DELIMITER ;
+
+
+
+DROP PROCEDURE IF EXISTS account_deactivation_status;
+DELIMITER ;;
+
+CREATE PROCEDURE account_deactivation_status(
+    IN f_email VARCHAR(100),
+    OUT account_status TINYINT
+)
+BEGIN
+    -- Set account_status to NULL initially to ensure it is reset properly
+    SET account_status = NULL;
+
+    -- Select the is_active value directly into the output parameter
+    SELECT is_active
+    INTO account_status
+    FROM register
+    WHERE email = f_email
+    LIMIT 1;
+END;;
+
+DELIMITER ;
+
+
+
+
+
+
+
+DROP PROCEDURE IF EXISTS activate_account;
+DELIMITER ;;
+
+CREATE PROCEDURE activate_account(
+    IN f_email VARCHAR(100)
+)
+BEGIN 
+    UPDATE register 
+    SET is_active = 1
+    WHERE email = f_email AND is_active = 0;
+
+    SELECT ROW_COUNT() AS activated_account;
+END ;;
+
+DELIMITER ;
+
+
+
+
+DROP PROCEDURE IF EXISTS deactivate_account;
+DELIMITER ;;
+
+CREATE PROCEDURE deactivate_account(
+    IN f_email VARCHAR(100)
+)
+BEGIN 
+    UPDATE register 
+    SET is_active = 0, deactivated_at = NOW()
+    WHERE email = f_email AND is_active = 1;
+
+    SELECT ROW_COUNT() AS account_that_deactivated;
+END ;;
+
+DELIMITER ;
 
 
 DROP PROCEDURE IF EXISTS check_if_label_name_exists;
@@ -507,6 +668,55 @@ BEGIN
 END ;;
     
 DELIMITER ;
+
+
+DROP PROCEDURE IF EXISTS is_google_registered;
+DELIMITER ;;
+
+CREATE PROCEDURE is_google_registered(
+    IN f_email VARCHAR(100),
+    OUT google_registered BOOLEAN
+)
+BEGIN
+    DECLARE count INT DEFAULT 0;
+
+    SELECT COUNT(*) INTO count
+    FROM register
+    WHERE email = f_email AND google_registered = TRUE;
+
+    SET google_registered = count > 0;
+
+END ;;
+
+DELIMITER ;
+
+
+DROP PROCEDURE IF EXISTS insert_google_register;
+DELIMITER ;;
+
+CREATE PROCEDURE insert_google_register(
+    IN f_email VARCHAR(100),
+    IN f_user_password VARCHAR(150),
+    IN f_verified BOOLEAN,
+    IN p_google_registered BOOLEAN
+)
+BEGIN
+    INSERT INTO register (
+        email, 
+        user_password, 
+        verified, 
+        google_registered
+    )
+    VALUES (
+        f_email, 
+        f_user_password, 
+        f_verified, 
+        p_google_registered
+    );
+END ;;
+
+DELIMITER ;
+
 
 
 DROP PROCEDURE IF EXISTS is_email_verified;

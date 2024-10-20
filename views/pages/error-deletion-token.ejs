@@ -1,0 +1,10 @@
+<%- include("./../partials/header.ejs") %>
+
+<main id="error-page" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh;">
+    <h1><%= title %></h1>
+    <p style="margin-top: 20px;"><%= message %></p>
+
+    <a href="/home" class="button" style="margin-top: 40px; text-decoration: none; color: white; background-color: #3498db; padding: 10px 20px; border-radius: 5px;">Return to Home Page</a>
+</main>
+
+<%- include("./../partials/footer.ejs") %>
