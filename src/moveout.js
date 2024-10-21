@@ -540,6 +540,15 @@ async function getInactiveUsers() {
 }
 
 
+async function getAllUsers()
+{
+    const db = await mysql.createConnection(config);
+    const [rows] = await db.query('CALL get_all_users()');
+    await db.end();
+    return rows[0];
+}
+
+
 
 module.exports = {
     "registerUser": registerUser,
@@ -572,5 +581,6 @@ module.exports = {
     insertDeleteToken,
     verifyDeleteToken,
     updateLastLogin,
-    getInactiveUsers
+    getInactiveUsers,
+    getAllUsers
 };

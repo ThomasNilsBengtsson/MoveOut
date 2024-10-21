@@ -20,12 +20,19 @@ ADD COLUMN is_active BOOLEAN DEFAULT TRUE,
 ADD COLUMN deactivated_at DATETIME NULL,
 ADD COLUMN deleteToken VARCHAR(64),
 ADD COLUMN deleteTokenExpires DATETIME,
-ADD COLUMN last_login DATETIME;
+ADD COLUMN last_login DATETIME,
+ADD COLUMN is_admin BOOLEAN NOT NULL DEFAULT FALSE;
 
 
 
 ALTER TABLE register
 ADD COLUMN google_registered BOOLEAN NOT NULL DEFAULT FALSE;
+
+
+/* 
+För admin konto
+ */
+INSERT INTO register (email, user_password, verified, is_active, is_admin) VALUES ('moveoutthomas@gmail.com', 'admin123456', TRUE, TRUE, TRUE);
 
 
 
@@ -56,7 +63,7 @@ ALTER TABLE qr_code_labels ADD CONSTRAINT unique_label_name UNIQUE (label_name);
 CREATE TABLE shared_labels (
     id INT AUTO_INCREMENT PRIMARY KEY,
     label_name VARCHAR(30),
-    original_label_id INT NOT NULL, -- Refers to the original label shared by the sender
+    original_label_id INT NOT NULL, 
     sender_email VARCHAR(100) NOT NULL,
     recipient_email VARCHAR(100) NOT NULL,
     shared_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -69,6 +76,17 @@ CREATE TABLE shared_labels (
 --Procedures
 --
 
+
+DROP PROCEDURE IF EXISTS get_all_users;
+DELIMITER ;;
+
+CREATE PROCEDURE get_all_users()
+BEGIN
+    SELECT email, is_active, last_login
+    FROM register;
+END ;;
+
+DELIMITER ;
 
 
 DROP PROCEDURE IF EXISTS update_last_login;
@@ -163,10 +181,9 @@ CREATE PROCEDURE account_deactivation_status(
     OUT account_status TINYINT
 )
 BEGIN
-    -- Set account_status to NULL initially to ensure it is reset properly
+   
     SET account_status = NULL;
 
-    -- Select the is_active value directly into the output parameter
     SELECT is_active
     INTO account_status
     FROM register
@@ -284,13 +301,13 @@ BEGIN
 
     SET new_label_name = CONCAT('shared: ', f_label_name);
 
-    -- Check for duplicate label names and append a suffix if necessary
+  
     WHILE EXISTS (SELECT 1 FROM qr_code_labels WHERE email = f_email AND label_name = new_label_name) DO
         SET new_label_name = CONCAT('shared: ', f_label_name, ' (', suffix_counter, ')');
         SET suffix_counter = suffix_counter + 1;
     END WHILE;
 
-    -- Insert the new label with a unique name
+
     INSERT INTO qr_code_labels (email, label_name, text_content, image_path, audio_path, content_type)
     VALUES (f_email, new_label_name, f_text_content, f_image_path, f_audio_path, f_content_type);
     

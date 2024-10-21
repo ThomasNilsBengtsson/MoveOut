@@ -5,7 +5,7 @@ const verify = require("../verifiers/verifiers.js");
 const validator = require('validator');
 const verifiers = require("../verifiers/verifiers.js");
 const emailFunctions = require("../utils/email.js");
-const isAuthenticated = require('../utils/auth.js');
+const authFunctions = require('../utils/auth.js');
 const qrFunctions = require("../utils/generateQR.js");
 const login = require("../utils/loginPost.js");
 const path = require('path');
@@ -13,10 +13,11 @@ const multer = require('multer');
 const fs = require('fs');
 const { glob } = require('glob'); 
 const crypto = require('crypto');
+const { title } = require("process");
 /* const { auth } = require('express-openid-connect');
 const authConfig = require('../authConfig'); */
-
-
+const isAuthenticated = authFunctions.isAuthenticated;
+const isAdmin = authFunctions.isAdmin;
 
 
 
@@ -878,6 +879,19 @@ router.get('/confirm-delete-account', async (req, res) => {
             message: 'The account has been successfully deleted.'
         });
     }
+});
+
+
+
+router.get('/admin-page', isAuthenticated, isAdmin, async (req, res) => {
+
+    const users = await moveout.getAllUsers();
+
+    res.render('pages/admin-page.ejs',{
+        title: 'Admin Dashboard',
+        users: users
+    })
+
 });
 
 
