@@ -1,5 +1,5 @@
-<%- include("./../partials/header.ejs") %>
-<body>
+<%- include("./../partials/header.ejs", { showNavbar: false }) %>
+
     <% if(label.text_content) { %>
         <h2><%= label.text_content || 'No text content yet.' %></h2>
     <% } %>
@@ -23,5 +23,5 @@
             <% } %>
         <% }) %>
     <% } %>
-</body>
+
 <%- include("./../partials/footer.ejs") %>

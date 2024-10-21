@@ -6,3 +6,21 @@
         <link rel ="stylesheet" href = "/style/style.css">
     </head>
     <body>
+
+
+        <% if (showNavbar) { %>
+            <nav class="navbar">
+                <ul>
+                    <li><a href="/home">Home</a></li>
+                    <li><a href="/share-labels">Share Labels</a></li>
+                    <li><a href="/print-label">Print Labels</a></li>
+                    <li><a href="/inbox">Inbox</a></li>
+                    <li><a href="/profile">Profile</a></li>
+                    <li>
+                        <form id="logoutForm" action="/logout" method="POST" style="display: inline;">
+                            <button type="submit" class="logout-button">Logout</button>
+                        </form>
+                    </li>
+                </ul>
+            </nav>
+        <% } %>

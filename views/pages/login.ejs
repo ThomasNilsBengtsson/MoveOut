@@ -1,21 +1,19 @@
-<%- include("./../partials/header.ejs") %>
+<%- include("./../partials/header.ejs", { showNavbar: false }) %>
 
-<body>
-    <main id="main-holder">
-      <h1 id="login-header">Log in</h1>
+<main id="main-holder">
+  <h1 id="login-header">Log in</h1>
 
-      <form id="login-form" method="post" >
-        <input type="text" name="f_email" id="username-field" class="login-form-field" placeholder="Email">
-        <% if (error && error.invalid) { %>
-          <div class="error-message" style="color: red;"><%= error.invalid %></div>
-        <% } %>
-        <input type="password" name="f_user_password" id="password-field" class="login-form-field" placeholder="Password">
-        <input type="submit" value="Log in" id="login-form-submit">
-        <a href="/register">Create new account</a>
-      </form> 
-      
-    </main>
-  </body>
-
-
+  <form id="login-form" method="post" >
+    <input type="text" name="f_email" id="username-field" class="login-form-field" placeholder="Email">
+    <% if (error && error.invalid) { %>
+      <div class="error-message" style="color: red;"><%= error.invalid %></div>
+    <% } %>
+    <input type="password" name="f_user_password" id="password-field" class="login-form-field" placeholder="Password">
+    <input type="submit" value="Log in" id="login-form-submit">
+    <a href="/register">Create new account</a>
+  </form> 
+  
+</main>
 <%- include("./../partials/footer.ejs") %>
+
+

@@ -1,3 +1,57 @@
+/* Basic Navbar Styles */
+.navbar {
+  background-color: #333; /* Dark background color for the navbar */
+  overflow: hidden; /* Clears floats and ensures content is visible */
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 20px;
+}
+
+.navbar ul {
+  list-style-type: none; /* Removes bullet points from the list items */
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 20px; /* Space between links */
+}
+
+.navbar li {
+  display: inline; /* Ensures links are displayed in a row */
+}
+
+.navbar li a {
+  color: white; /* White text color for links */
+  text-decoration: none; /* Removes underline from links */
+  padding: 10px; /* Padding for clickable area */
+  font-weight: bold; /* Makes the links stand out */
+}
+
+.navbar li a:hover {
+  background-color: #555; /* Lighter background color when hovered */
+  color: #fff; /* Keeps text color white when hovered */
+  border-radius: 5px; /* Rounds corners of hovered link background */
+  transition: background-color 0.3s ease; /* Smooth background transition */
+}
+
+/* Responsive Styling for Smaller Screens */
+@media (max-width: 768px) {
+  .navbar {
+      flex-direction: column; /* Stacks navbar items vertically */
+      align-items: center;
+  }
+  
+  .navbar ul {
+      flex-direction: column;
+      gap: 10px;
+  }
+  
+  .navbar li {
+      margin-bottom: 10px;
+  }
+}
+
+
+
 /* 
 * {
     margin: 0;

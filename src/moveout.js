@@ -66,7 +66,7 @@ async function userLogIn(email, userPassword)
         const sql = `CALL retrieve_hashed_password(?)`;
         const [rows, fields] = await db.execute(sql, [email]);
 
-        // Check if the email exists in the database
+       
         if (!rows[0] || !rows[0][0]) {
             return { success: false, message: "Invalid email or password" };
         }
@@ -93,33 +93,6 @@ async function userLogIn(email, userPassword)
     }
 }
 
-/* async function isUserExists(email) {
-    let db;
-    try {
-        // Create a database connection
-        db = await mysql.createConnection(config);
-
-        // Define the SQL query to use the existing stored procedure
-        const sql = `CALL check_email_exists(?)`;
-        
-        // Execute the SQL query
-        const [rows, fields] = await db.execute(sql, [email]);
-        
-        // Check if a user was found
-        if (rows[0] && rows[0][0]) {
-            return { success: true, message: "User exists" };
-        } else {
-            return { success: false, message: "User not found" };
-        }
-
-    } catch (error) {
-        console.error("Error during user existence check:", error);
-        throw error;  // Throwing the error to be caught by the caller
-    } finally {
-        // Ensure the database connection is closed
-        if (db && db.end) await db.end();
-    }
-} */
 
 
 
@@ -181,15 +154,15 @@ async function check_if_label_name_exists(email, labelName) {
         const checkLabelName = `CALL check_if_label_name_exists(?, ?)`;
         const [existingLabel] = await db.query(checkLabelName, [labelName, email]);
 
-        console.log("Existing label result: ", existingLabel); // Log to verify the structure
+        console.log("Existing label result: ", existingLabel); 
 
         if (existingLabel && existingLabel[0] && existingLabel[0][0]) {
             const count = existingLabel[0][0]["label_count"];
-            return count > 0; // Returns true if the label name exists, false otherwise
+            return count > 0; 
         }
-        return false; // If no data is found, the label does not exist
+        return false;
     } finally {
-        await db.end(); // Ensure the database connection is closed
+        await db.end(); 
     }
 }
 
@@ -348,44 +321,43 @@ async function acceptSharedLabel(sharedId, recipientEmail) {
     const db = await mysql.createConnection(config);
 
     try {
-        // Step 1: Get the shared label information
+       
         const [rows] = await db.query('CALL get_shared_label_details(?)', [sharedId]);
-        const sharedLabel = rows[0][0];  // Assuming the procedure returns the shared label details
+        const sharedLabel = rows[0][0];  
 
         if (!sharedLabel) {
             throw new Error('Shared label not found.');
         }
 
-        // Parse image and audio paths if they exist
+       
         let imagePaths = [];
         let audioPaths = [];
 
         if (sharedLabel.image_path) {
             try {
-                // Try to parse as JSON array
+      
                 imagePaths = JSON.parse(sharedLabel.image_path);
             } catch (e) {
-                // If parsing fails, assume it's a single path
+              
                 imagePaths = [sharedLabel.image_path];
             }
         }
 
         if (sharedLabel.audio_path) {
             try {
-                // Try to parse as JSON array
+         
                 audioPaths = JSON.parse(sharedLabel.audio_path);
             } catch (e) {
-                // If parsing fails, assume it's a single path
+               
                 audioPaths = [sharedLabel.audio_path];
             }
         }
 
-        // Generate new paths for User B using the same logic from Multer
         const baseDir = path.resolve(__dirname, '../public');
         const recipientImageDir = path.join(baseDir, 'uploads', 'images', recipientEmail);
         const recipientAudioDir = path.join(baseDir, 'uploads', 'audio', recipientEmail);
 
-        // Ensure user directories exist
+        
         if (!fs.existsSync(recipientImageDir)) {
             fs.mkdirSync(recipientImageDir, { recursive: true });
         }
@@ -393,7 +365,6 @@ async function acceptSharedLabel(sharedId, recipientEmail) {
             fs.mkdirSync(recipientAudioDir, { recursive: true });
         }
 
-        // Copy files and generate new paths
         let newImagePaths = [];
         let newAudioPaths = [];
 
@@ -419,7 +390,6 @@ async function acceptSharedLabel(sharedId, recipientEmail) {
             });
         }
 
-        // Insert the new label record into the qr_code_labels table for User B
         const[result] = await db.query('CALL accept_shared_label(?, ?, ?, ?, ?, ?)', [
             recipientEmail,
             sharedLabel.label_name,

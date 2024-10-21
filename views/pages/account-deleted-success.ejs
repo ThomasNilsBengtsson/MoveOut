@@ -1,5 +1,5 @@
-<%- include("./../partials/header.ejs") %>
-<body>
+<%- include("./../partials/header.ejs", { showNavbar: false }) %>
+
 <main id="deletion-success" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh;">
     <h1><%= title %></h1>
     <p><%= message %></p>
@@ -7,6 +7,5 @@
 
 </main>
 
-</body>
 
 <%- include("./../partials/footer.ejs") %>

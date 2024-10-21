@@ -1,87 +1,92 @@
-<%- include("./../partials/header.ejs") %>
+<%- include("./../partials/header.ejs", { showNavbar: true }) %>
 
-<body>
-    <main id="share-label-form" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh;">
-        <h1>Share Label with a User</h1>
+<style>
+ 
+    #share-label-form {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        min-height: calc(100vh - 100px); 
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
 
-        <% if (errorMessage) { %>
-            <div class="alert alert-danger" style="color: red; margin-bottom: 20px;"><%= errorMessage %></div>
-        <% } %>
-        <!-- Share Form for a Label -->
-        <div class="share-label-form-container">
-            <form action="/share-label" method="POST" class="share-label-form">
-                <label for="recipientEmail">Recipient's Email:</label>
-                <input type="email" name="recipientEmail" id="recipientEmail" required>
-                
-                <label for="labelId">Label Name:</label>
-                <input type="text" name="labelName" id="labelName" required>
+    #share-label-form h1 {
+        color: #333;
+        text-align: center;
+        margin-bottom: 20px;
+        font-size: 28px;
+    }
 
-                <button type="submit" class="share-button">Share Label</button>
-            </form>
-        </div>
-    </main>
+    .share-label-form-container {
+        background: #ffffff;
+        border-radius: 10px;
+        padding: 20px;
+        max-width: 400px;
+        width: 100%;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
 
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f6f9;
-            margin: 0;
-            padding: 20px;
-        }
+    .share-label-form-container label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: bold;
+        color: #555;
+        text-align: left;
+    }
 
-        h1 {
-            color: #333;
-            text-align: center;
-            margin-bottom: 20px;
-        }
+    .share-label-form-container input[type="email"],
+    .share-label-form-container input[type="text"] {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 20px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 14px;
+    }
 
-        .share-label-form-container {
-            background: #ffffff;
-            border-radius: 10px;
-            padding: 20px;
-            max-width: 400px;
-            margin: 0 auto;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }
+    .share-label-form-container button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background-color 0.3s ease;
+    }
 
-        .share-label-form {
-            margin-bottom: 20px;
-        }
+    .share-label-form-container button:hover {
+        background-color: #0056b3;
+    }
 
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: bold;
-            color: #555;
-            text-align: left;
-        }
+    .alert {
+        color: red;
+        margin-bottom: 20px;
+    }
+</style>
 
-        input[type="email"], input[type="text"] {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 20px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-family: Arial, sans-serif;
-            font-size: 14px;
-        }
 
-        button {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.3s ease;
-        }
+<main id="share-label-form">
+<h1>Share Label with a User</h1>
 
-        button:hover {
-            background-color: #0056b3;
-        }
-    </style>
-</body>
+<% if (errorMessage) { %>
+    <div class="alert alert-danger"><%= errorMessage %></div>
+<% } %>
+
+<div class="share-label-form-container">
+    <form action="/share-label" method="POST" class="share-label-form">
+        <label for="recipientEmail">Recipient's Email:</label>
+        <input type="email" name="recipientEmail" id="recipientEmail" required>
+        
+        <label for="labelId">Label Name:</label>
+        <input type="text" name="labelName" id="labelName" required>
+
+        <button type="submit" class="share-button">Share Label</button>
+    </form>
+</div>
+</main>
 
 <%- include("./../partials/footer.ejs") %>

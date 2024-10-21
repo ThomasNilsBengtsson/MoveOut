@@ -1,81 +1,81 @@
-<%- include("./../partials/header.ejs") %>
+<%- include("./../partials/header.ejs", { showNavbar: true }) %>
 
 <style>
-    body {
-        font-family: Arial, sans-serif;
-        background-color: #f4f6f9;
-        margin: 0;
-        padding: 20px;
+   
+    #create-label-page {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh; 
+        padding: 0;
     }
 
-    h1 {
+    #create-label-page h1 {
         color: #333;
         text-align: center;
+        margin-bottom: 20px;
     }
 
-    form {
+    #create-label-page form {
         background: #ffffff;
         border-radius: 10px;
         padding: 20px;
         max-width: 600px;
-        margin: 0 auto;
+        width: 100%;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
 
-    label {
+    #create-label-page label {
         display: block;
         margin-bottom: 8px;
         font-weight: bold;
         color: #555;
     }
 
-    select, textarea, input[type="file"] {
+    #create-label-page select,
+    #create-label-page textarea,
+    #create-label-page input[type="file"],
+    #create-label-page input[type="text"] {
         width: 100%;
         padding: 10px;
         margin-bottom: 20px;
         border: 1px solid #ddd;
         border-radius: 5px;
-        font-family: Arial, sans-serif;
         font-size: 14px;
     }
 
-    textarea {
+    #create-label-page textarea {
         height: 100px;
         resize: vertical;
     }
 
-    input[type="file"] {
-        border: none;
-        padding: 5px;
-    }
-
-    .label-option {
+    #create-label-page .label-option {
         display: inline-block;
         margin-right: 10px;
         text-align: center;
     }
 
-    .label-option img {
+    #create-label-page .label-option img {
         border: 2px solid #ddd;
         border-radius: 5px;
         transition: border-color 0.3s ease;
     }
 
-    .label-option input[type="radio"] {
+    #create-label-page .label-option input[type="radio"] {
         display: none;
     }
 
-    .label-option input[type="radio"]:checked + label img {
+    #create-label-page .label-option input[type="radio"]:checked + label img {
         border-color: #007bff;
     }
 
-    .toggle-container {
+    #create-label-page .toggle-container {
         display: flex;
         align-items: center;
         margin-bottom: 20px;
     }
 
-    .toggle-switch {
+    #create-label-page .toggle-switch {
         position: relative;
         display: inline-block;
         width: 50px;
@@ -83,13 +83,13 @@
         margin-right: 10px;
     }
 
-    .toggle-switch input {
+    #create-label-page .toggle-switch input {
         opacity: 0;
         width: 0;
         height: 0;
     }
 
-    .slider {
+    #create-label-page .slider {
         position: absolute;
         top: 0;
         left: 0;
@@ -100,7 +100,7 @@
         transition: 0.4s;
     }
 
-    .slider:before {
+    #create-label-page .slider:before {
         position: absolute;
         content: "";
         height: 19px;
@@ -112,20 +112,20 @@
         transition: 0.4s;
     }
 
-    input:checked + .slider {
+    #create-label-page input:checked + .slider {
         background-color: #007bff;
     }
 
-    input:checked + .slider:before {
+    #create-label-page input:checked + .slider:before {
         transform: translateX(25px);
     }
 
-    .toggle-label {
+    #create-label-page .toggle-label {
         font-weight: bold;
         color: #555;
     }
 
-    button {
+    #create-label-page button {
         background-color: #007bff;
         color: white;
         border: none;
@@ -138,75 +138,76 @@
         transition: background-color 0.3s ease;
     }
 
-    button:hover {
+    #create-label-page button:hover {
         background-color: #0056b3;
     }
 </style>
 
+<main id="create-label-page">
+   
 
-<form id="createLabelForm" action="/create-label" method="POST" enctype="multipart/form-data">
-
-    <div>
-        <label for="labelName">Label Name:</label>
-        <input type="text" name="labelName" id="labelName" required maxlength="15">
-    </div>
-    
-
-    <label for="contentType">Select Content Type:</label>
-    <select name="contentType" id="contentType" required>
-        <option value="text">Text</option>
-        <option value="image">Image</option>
-        <option value="audio">Audio</option>
-    </select>
-
-    <div id="textContentInput">
-        <label for="textContent">Enter Text Content:</label>
-        <textarea name="textContent" id="textContent"></textarea>
-    </div>
-
-    <div id="imageContentInput" style="display: none;">
-        <label for="imageContent">Upload Image:</label>
-        <input type="file" name="imageContent" id="imageContent" accept="image/*">
-    </div>
-
-    <div id="audioContentInput" style="display: none;">
-        <label for="audioContent">Upload Audio:</label>
-        <input type="file" name="audioContent" id="audioContent" accept="audio/*">
-    </div>
-
-    <div id="labelDesigns">
-        <label for="labelDesign">Choose Label Design:</label>
-        <div class="label-option">
-            <input type="radio" id="label1" name="labelDesign" value="label1" required>
-            <label for="label1">
-                <img src="/background-images/label-image-black.png" alt="Label Design 1" width="100" height="100">
-            </label>
+    <form id="createLabelForm" action="/create-label" method="POST" enctype="multipart/form-data">
+        <div>
+            <label for="labelName">Label Name:</label>
+            <input type="text" name="labelName" id="labelName" required maxlength="15">
         </div>
-        <div class="label-option">
-            <input type="radio" id="label2" name="labelDesign" value="label2" required>
-            <label for="label2">
-                <img src="/background-images/label-image-yellow.png" alt="Label Design 2" width="100" height="100">
-            </label>
-        </div>
-        <div class="label-option">
-            <input type="radio" id="label3" name="labelDesign" value="label3" required>
-            <label for="label3">
-                <img src="/background-images/label-image-gray.png" alt="Label Design 3" width="100" height="100">
-            </label>
-        </div>
-    </div>
 
-    <div class="toggle-container">
-        <label class="toggle-switch">
-            <input type="checkbox" name="isLabelPrivate" id="userOption" value="on">
-            <span class="slider"></span>
-        </label>
-        <span class="toggle-label">Private label</span>
-    </div>
-    
-    <div id="error-message" style="color: red;"></div>
-    <button type="submit">Create Label</button>
-</form>
+        <label for="contentType">Select Content Type:</label>
+        <select name="contentType" id="contentType" required>
+            <option value="text">Text</option>
+            <option value="image">Image</option>
+            <option value="audio">Audio</option>
+        </select>
+
+        <div id="textContentInput">
+            <label for="textContent">Enter Text Content:</label>
+            <textarea name="textContent" id="textContent"></textarea>
+        </div>
+
+        <div id="imageContentInput" style="display: none;">
+            <label for="imageContent">Upload Image:</label>
+            <input type="file" name="imageContent" id="imageContent" accept="image/*">
+        </div>
+
+        <div id="audioContentInput" style="display: none;">
+            <label for="audioContent">Upload Audio:</label>
+            <input type="file" name="audioContent" id="audioContent" accept="audio/*">
+        </div>
+
+        <div id="labelDesigns">
+            <label for="labelDesign">Choose Label Design:</label>
+            <div class="label-option">
+                <input type="radio" id="label1" name="labelDesign" value="label1" required>
+                <label for="label1">
+                    <img src="/background-images/label-image-black.png" alt="Label Design 1" width="100" height="100">
+                </label>
+            </div>
+            <div class="label-option">
+                <input type="radio" id="label2" name="labelDesign" value="label2" required>
+                <label for="label2">
+                    <img src="/background-images/label-image-yellow.png" alt="Label Design 2" width="100" height="100">
+                </label>
+            </div>
+            <div class="label-option">
+                <input type="radio" id="label3" name="labelDesign" value="label3" required>
+                <label for="label3">
+                    <img src="/background-images/label-image-gray.png" alt="Label Design 3" width="100" height="100">
+                </label>
+            </div>
+        </div>
+
+        <div class="toggle-container">
+            <label class="toggle-switch">
+                <input type="checkbox" name="isLabelPrivate" id="userOption" value="on">
+                <span class="slider"></span>
+            </label>
+            <span class="toggle-label">Private label</span>
+        </div>
+
+        <div id="error-message" style="color: red;"></div>
+        <button type="submit">Create Label</button>
+    </form>
+</main>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -215,14 +216,14 @@ document.addEventListener('DOMContentLoaded', function () {
     const imageContentInput = document.getElementById("imageContentInput");
     const audioContentInput = document.getElementById("audioContentInput");
 
-    // Function to handle content type change
+   
     function handleContentTypeChange() {
-        // Hide all inputs initially
+        
         textContentInput.style.display = "none";
         imageContentInput.style.display = "none";
         audioContentInput.style.display = "none";
 
-        // Show the selected input type
+    
         if (contentTypeSelect.value === "text") {
             textContentInput.style.display = "block";
         } else if (contentTypeSelect.value === "image") {
@@ -232,17 +233,17 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Attach event listener to content type dropdown
+   
     contentTypeSelect.addEventListener("change", handleContentTypeChange);
 
-    // Initialize the form with the correct content input visible
+   
     handleContentTypeChange();
 });
 
 
     const form = document.getElementById('createLabelForm');
     form.addEventListener('submit', async function (event) {
-    event.preventDefault(); // Prevent default form submission
+    event.preventDefault(); 
 
     const formData = new FormData(form);
 
@@ -253,12 +254,12 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     if (!response.ok) {
-        // If the server returns an error, extract and display the message
+        
         const result = await response.json();
         document.getElementById('error-message').textContent = result;
     } else {
-        // Proceed with the redirection that your backend handles (no additional code needed here)
-        window.location.href = response.url; // Redirect as intended by backend
+        
+        window.location.href = response.url; 
     }
     } catch (error) {
     document.getElementById('error-message').textContent = 'Label name must be unique. This label name already exists.';

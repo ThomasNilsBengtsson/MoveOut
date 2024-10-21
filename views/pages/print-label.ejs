@@ -1,71 +1,140 @@
-<%- include("./../partials/header.ejs") %>
+<%- include("./../partials/header.ejs", { showNavbar: true }) %>
 
-<body>
-   
+
+<style>
+
+    #print-label-page {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        min-height: calc(100vh - 100px); 
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    #print-label-page h1 {
+        color: #333;
+        text-align: center;
+        margin-bottom: 20px;
+        font-size: 28px;
+    }
+
+    #label-form {
+        background: #ffffff;
+        border-radius: 10px;
+        padding: 20px;
+        max-width: 400px;
+        width: 100%;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+
+    #label-form label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: bold;
+        color: #555;
+        text-align: left;
+    }
+
+    #label-form input[type="text"] {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 20px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 14px;
+    }
+
+    #label-form button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background-color 0.3s ease;
+    }
+
+    #label-form button:hover {
+        background-color: #0056b3;
+    }
+
+    .alert {
+        color: red;
+        margin-bottom: 20px;
+    }
+</style>
+
+
+<main id="print-label-page" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh;">
     <h1>Print Your Label</h1>
+
     <% if (errorMessage) { %>
-        <p style="color: red;"><%= errorMessage %></p>
+        <p class="alert" style="color: red;"><%= errorMessage %></p>
     <% } %>
+
     <form id="label-form">
         <label for="labelName">Enter Label Name:</label>
         <input type="text" id="labelName" name="labelName" required>
         <button type="button" id="print-button">Print Label</button>
     </form>
+</main>
 
-    <script>
-        document.getElementById("print-button").addEventListener("click", function () {
-            const labelName = document.getElementById("labelName").value;
+<script>
+    document.getElementById("print-button").addEventListener("click", function () {
+        const labelName = document.getElementById("labelName").value;
 
-            if (labelName) {
-                // Fetch the label content from the server
-                fetch(`/get-label?name=${encodeURIComponent(labelName)}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            // Open a new window to display the label image
-                            const printWindow = window.open('', '_blank');
-                            printWindow.document.write(`
-                                <html>
-                                    <head>
-                                        <title>Print Label</title>
-                                        <style>
-                                            body {
-                                                margin: 0;
-                                                display: flex;
-                                                justify-content: center;
-                                                align-items: center;
-                                                height: 100vh;
-                                            }
-                                            img {
-                                                max-width: 100%;
-                                                max-height: 100%;
-                                            }
-                                        </style>
-                                    </head>
-                                    <body>
-                                        <img src="${data.label.imagePath}" alt="${data.label.name}">
-                                    </body>
-                                </html>
-                            `);
-                            printWindow.document.close();
-                            // Wait for the new window to load its content before printing
-                            printWindow.onload = function () {
-                                printWindow.print();
-                                printWindow.close(); // Close the window after printing
-                            };
-                        } else {
-                            alert("Label not found");
-                        }
-                    })
-                    .catch(error => {
-                        console.error("Error fetching label:", error);
-                    });
-            } else {
-                alert("Please enter a label name.");
-            }
-        });
-    </script>
-
-</body>
+        if (labelName) {
+            
+            fetch(`/get-label?name=${encodeURIComponent(labelName)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                
+                        const printWindow = window.open('', '_blank');
+                        printWindow.document.write(`
+                            <html>
+                                <head>
+                                    <title>Print Label</title>
+                                    <style>
+                                        body {
+                                            margin: 0;
+                                            display: flex;
+                                            justify-content: center;
+                                            align-items: center;
+                                            height: 100vh;
+                                        }
+                                        img {
+                                            max-width: 100%;
+                                            max-height: 100%;
+                                        }
+                                    </style>
+                                </head>
+                                <body>
+                                    <img src="${data.label.imagePath}" alt="${data.label.name}">
+                                </body>
+                            </html>
+                        `);
+                        printWindow.document.close();
+                       
+                        printWindow.onload = function () {
+                            printWindow.print();
+                            printWindow.close();
+                        };
+                    } else {
+                        alert("Label not found");
+                    }
+                })
+                .catch(error => {
+                    console.error("Error fetching label:", error);
+                });
+        } else {
+            alert("Please enter a label name.");
+        }
+    });
+</script>
 
 <%- include("./../partials/footer.ejs") %>
