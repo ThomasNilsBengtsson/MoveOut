@@ -1,25 +1,229 @@
-<%- include("./../partials/footer.ejs", { showNavbar: true }) %>
-<main id="admin-dashboard" style="padding: 20px;"></main>
+<%- include("./../partials/header.ejs", { showNavbar: true }) %>
+
+<style>
+
+.admin-dashboard-body {
+    font-family: Arial, sans-serif;
+    background-color: #f8f9fa;
+    color: #333;
+    margin: 0;
+    padding: 20px;
+}
+
+
+#admin-dashboard-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background-color: #ffffff;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+
+#admin-dashboard-search {
+    width: 300px;
+    padding: 10px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
+
+
+.admin-dashboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+.admin-dashboard-table thead {
+    background-color: #007bff;
+    color: white;
+}
+
+.admin-dashboard-table th,
+.admin-dashboard-table td {
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+.admin-dashboard-table th {
+    text-transform: uppercase;
+    font-size: 14px;
+}
+
+.admin-dashboard-table tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+.admin-dashboard-table tr:hover {
+    background-color: #e9ecef;
+}
+
+
+#admin-email-section {
+    margin-top: 30px;
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+}
+
+#admin-send-email-button {
+    padding: 10px 20px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+#admin-send-email-button:hover {
+    background-color: #218838;
+}
+
+#admin-email-form-container {
+    margin-top: 20px;
+}
+
+.admin-form-group {
+    margin-bottom: 15px;
+}
+
+.admin-label {
+    font-weight: bold;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.admin-input,
+.admin-textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.admin-submit-button {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.admin-submit-button:hover {
+    background-color: #0056b3;
+}
+
+.activation-button {
+    padding: 8px 12px;
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.activation-button:hover {
+    background-color: #c82333;
+}
+
+
+</style>
+
+
+
+<main id="admin-dashboard-container" class="admin-dashboard-body">
     <h1>Admin Dashboard</h1>
-    <table>
+    <input type="text" id="admin-dashboard-search" placeholder="Search by email" onkeyup="filterUsers()">
+
+    <table class="admin-dashboard-table">
         <thead>
             <tr>
                 <th>Email</th>
-                <th>Status</th>
                 <th>Last Login</th>
-                <th>Google Registered</th>
+                <th>Total Storage Used</th>
+                <th>Actions</th>
             </tr>
         </thead>
-        <tbody>
-            <% users.forEach(user => { %>
-                <tr>
-                    <td><%= user.email %></td>
-                    <td><%= user.is_active ? 'Active' : 'Inactive' %></td>
-                    <td><%= user.last_login_at ? new Date(user.last_login_at).toLocaleString() : 'Never' %></td>
-                    <td><%= user.google_registered ? 'Yes' : 'No' %></td>
+        <tbody id="userTable">
+            <% users.forEach(function(user) { %>
+                <tr class="user-row">
+                    <td class="user-email"><%= user.email %></td>
+                    <td>
+                        <% if (user.last_login) { %>
+                            <%= new Date(user.last_login).toLocaleString('en-US', { 
+                                year: 'numeric', 
+                                month: 'short', 
+                                day: 'numeric', 
+                                hour: '2-digit', 
+                                minute: '2-digit', 
+                                hour12: false 
+                            }) %>
+                        <% } else { %>
+                            Active Never
+                        <% } %>
+                    </td>
+                    <td><%= (user.total_storage_used / (1024 * 1024)).toFixed(2) %> MB</td>
+                    <td>
+                        <form action="/admin/toggle-activation" method="POST">
+                            <input type="hidden" name="userEmail" value="<%= user.email %>">
+                            <input type="hidden" name="isActive" value="<%= user.is_active ? 'false' : 'true' %>">
+                            <button type="submit" class="activation-button">
+                                <%= user.is_active ? 'Deactivate' : 'Activate' %>
+                            </button>
+                        </form>
+                    </td>
                 </tr>
-            <% }) %>
+            <% }); %>
         </tbody>
     </table>
+
+    <section id="admin-email-section">
+        <h2>Send Email to All Users</h2>
+        <button onclick="toggleEmailForm()" id="admin-send-email-button">Write email</button>
+        
+        <div id="admin-email-form-container" style="display: none; margin-top: 20px;">
+            <form action="/admin/send-email" method="POST">
+                <div class="admin-form-group">
+                    <label for="subject" class="admin-label">Subject:</label>
+                    <input type="text" name="subject" id="subject" class="admin-input" required>
+                </div>
+                <div class="admin-form-group">
+                    <label for="message" class="admin-label">Message:</label>
+                    <textarea name="message" id="message" class="admin-textarea" rows="5" required></textarea>
+                </div>
+                <button type="submit" class="admin-submit-button">Send Email</button>
+            </form>
+        </div>
+    </section>
 </main>
+
+
+<script>
+    function filterUsers() {
+        const input = document.getElementById('searchUser').value.toLowerCase();
+
+        const rows = document.querySelectorAll('.user-row');
+        
+
+        rows.forEach(row => {
+            const email = row.querySelector('.user-email').textContent.toLowerCase();
+            row.style.display = email.includes(input) ? '' : 'none';
+        });
+    }
+
+
+    function toggleEmailForm() {
+        const formContainer = document.getElementById('email-form-container');
+        formContainer.style.display = formContainer.style.display === 'none' ? 'block' : 'none';
+    }
+</script>
+
+
 <%- include("./../partials/footer.ejs") %>

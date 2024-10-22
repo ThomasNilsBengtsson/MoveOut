@@ -8,6 +8,7 @@ const port = 3000;
 const indexRoutes = require("./routes/indexRoutes.js");
 const session = require('express-session');
 require('./inactiveUsers/inactiveUsers.js');
+require('./admin/admin.js');
 
 // Log message for starting the server
 console.log('Attempting to start the server...');
@@ -23,6 +24,14 @@ app.use(session({
   saveUninitialized: false,
   cookie: { secure: false }
 }));
+
+app.use((req, res, next) => {
+  res.locals.showNavbar = true;
+  res.locals.is_admin = req.session.is_admin || false; 
+  next();
+});
+
+
 
 app.use(indexRoutes);
 

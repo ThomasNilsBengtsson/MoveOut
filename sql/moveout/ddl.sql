@@ -21,18 +21,14 @@ ADD COLUMN deactivated_at DATETIME NULL,
 ADD COLUMN deleteToken VARCHAR(64),
 ADD COLUMN deleteTokenExpires DATETIME,
 ADD COLUMN last_login DATETIME,
-ADD COLUMN is_admin BOOLEAN NOT NULL DEFAULT FALSE;
+ADD COLUMN is_admin BOOLEAN NOT NULL DEFAULT FALSE,
+ADD COLUMN total_storage_used BIGINT DEFAULT 0;
 
 
 
 ALTER TABLE register
 ADD COLUMN google_registered BOOLEAN NOT NULL DEFAULT FALSE;
 
-
-/* 
-För admin konto
- */
-INSERT INTO register (email, user_password, verified, is_active, is_admin) VALUES ('moveoutthomas@gmail.com', 'admin123456', TRUE, TRUE, TRUE);
 
 
 
@@ -75,6 +71,31 @@ CREATE TABLE shared_labels (
 --
 --Procedures
 --
+
+
+
+DROP PROCEDURE IF EXISTS get_non_admin_users;
+DELIMITER ;;
+
+CREATE PROCEDURE get_non_admin_users()
+BEGIN
+    SELECT email, last_login, is_active, total_storage_used FROM register WHERE is_admin = FALSE;
+END ;;
+
+DELIMITER ;
+
+
+
+DROP PROCEDURE IF EXISTS get_admin_status;
+DELIMITER ;;
+
+CREATE PROCEDURE get_admin_status(
+    IN f_email VARCHAR(100))
+BEGIN
+    SELECT is_admin FROM register WHERE email = f_email;
+END ;;
+
+DELIMITER ;
 
 
 DROP PROCEDURE IF EXISTS get_all_users;

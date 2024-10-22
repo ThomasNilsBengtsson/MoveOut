@@ -130,44 +130,6 @@ router.post("/register", async (req, res) => {
     }   
 });
 
-/* router.get('/register-with-google', auth(authConfig), (req, res) => {
-    console.log("Register with Google route accessed.");
-    console.log("req.oidc:", req.oidc); // Log req.oidc to see if it's defined
-   // console.log(" req : ", req);
-    if (req.oidc && req.oidc.login) {
-        // Initiate Google login via Auth0
-        req.oidc.login({ returnTo: '/callback' });
-      } else {
-        console.error('OIDC object is not available');
-        res.status(500).send('Internal Server Error: OIDC is not available');
-      }
-});  */
-
-/* 
-router.get('/callback', auth(authConfig), async (req, res) => {
-    console.log("Callback route accessed.");
-    console.log("req.oidc:", req.oidc); // Log req.oidc to see if it's defined
-    console.log("req.oidc.user:", req.oidc ? req.oidc.user : 'undefined'); // Log user profile if available
-    
-    const userProfile = req.oidc.user; // User profile from Auth0
-    const email = userProfile.email;
-
-  
-        const [results] = await moveout.doesEmailExist(email);
-
-        if (results.length > 0) {
-            req.session.email = email; 
-            return res.redirect('/home'); 
-        } else {
-
-            await moveout.insertGoogleRegister(email, null, true, true);
-
-            req.session.email = email; 
-            return res.redirect('/home'); 
-        }
-});
- */
-
 
 
 
@@ -235,7 +197,7 @@ router.get("/home", isAuthenticated, async (req, res) => {
         [directoryPath, directoryPathAudio, directoryPathImage].forEach(dirPath => {
             if (!fs.existsSync(dirPath)) {
                 fs.mkdirSync(dirPath, { recursive: true });
-                console.log(`Created new directory for user: ${dirPath}`);
+                
             }
         });
 
@@ -885,8 +847,8 @@ router.get('/confirm-delete-account', async (req, res) => {
 
 router.get('/admin-page', isAuthenticated, isAdmin, async (req, res) => {
 
-    const users = await moveout.getAllUsers();
-
+    const users = await moveout.getUsersWithStorageData();
+    console.log("Users Data:", users);
     res.render('pages/admin-page.ejs',{
         title: 'Admin Dashboard',
         users: users
@@ -894,6 +856,23 @@ router.get('/admin-page', isAuthenticated, isAdmin, async (req, res) => {
 
 });
 
+
+router.post('/admin/toggle-activation', isAuthenticated, isAdmin, async (req, res) => {
+    const { userEmail, isActive } = req.body; 
+    await moveout.accountActivationToggle(userEmail, isActive === 'true');
+    res.redirect('/admin-page');
+});
+
+
+router.post('/admin/send-email', isAuthenticated, isAdmin, async (req, res) => {
+    const { subject, message } = req.body;
+
+    await emailFunctions.adminSendMailToUsers(subject, message);
+
+    console.log('Emails sent successfully');
+    res.redirect('/admin-page');
+
+});
 
 /* 
 add is authenticated?

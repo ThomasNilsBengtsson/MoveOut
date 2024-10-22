@@ -1,6 +1,7 @@
 
 require('dotenv').config();
 const nodemailer = require('nodemailer');
+const moveout = require("../src/moveout.js");
 
 async function sendVerificationEmail(userEmail, verificationLink) {
   const transporter = nodemailer.createTransport({
@@ -112,11 +113,43 @@ async function accountDeactivationReminder(userEmail) {
 }
 
 
+
+async function adminSendMailToUsers(subject, message) {
+ 
+    const users = await moveout.getNonAdminUsers();
+    const recipientEmails = users.map(user => user.email);
+
+    const transporter = nodemailer.createTransport({
+      service: "Gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+   
+    const mailOptions = {
+      from: `"MoveOut" <${process.env.EMAIL_USER}>`,
+      to: recipientEmails,
+      subject: subject,
+      html: `<p>${message}</p>`,
+    };
+
+
+    await transporter.sendMail(mailOptions);
+
+    console.log('Emails sent successfully to all users');
+
+}
+
+
+
 module.exports = 
 { 
     sendVerificationEmail,
     accountCreationConfirmation,
     sendVerificationCodeLabel,
     sendDeleteAccountLink,
-    accountDeactivationReminder
+    accountDeactivationReminder,
+    adminSendMailToUsers
 };

@@ -32,6 +32,9 @@ async function loginPost(req, res) {
     
     req.session.email = email;  
     await moveout.updateLastLogin(req.session.email);
+    const isAdmin = await moveout.isAdmin(email);
+    console.log(`Admin Status for ${email}: ${isAdmin}`); 
+    req.session.is_admin = isAdmin;
     return res.redirect("/home");
 }
 

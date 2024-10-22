@@ -4,7 +4,7 @@ const fs = require("fs");
 const path = require("path");
 const bcrypt = require('bcrypt');
 const qrFunctions = require("../utils/generateQR.js");
-
+const { getTotalStorageUsed } = require('../utils/userStorageData.js');
 const config = require("../config/db/moveout.js");
 const hashed = require("../verifiers/hashed.js")
 
@@ -72,7 +72,7 @@ async function userLogIn(email, userPassword)
         }
 
         const hashedPassword = rows[0][0].user_password;
-        console.log("Hashedpassword", hashedPassword);
+       
         if (!hashedPassword) {
             return { success: false, message: "Invalid email or password" };
         }
@@ -91,6 +91,21 @@ async function userLogIn(email, userPassword)
       
         if (db && db.end) await db.end();
     }
+}
+
+
+async function isAdmin(email) {
+    const db = await mysql.createConnection(config);
+    let sql = `CALL get_admin_status(?)`;
+    const [rows] = await db.query(sql, [email]);
+    await db.end();
+    console.log("isAdmin : ", rows);
+   // Ensure that rows[0] exists before accessing it
+   if (rows && rows[0] && rows[0].length > 0) {
+    return rows[0][0].is_admin === 1;
+}
+return false; // Return false if no matching email is found
+    return false;
 }
 
 
@@ -153,8 +168,6 @@ async function check_if_label_name_exists(email, labelName) {
     try {
         const checkLabelName = `CALL check_if_label_name_exists(?, ?)`;
         const [existingLabel] = await db.query(checkLabelName, [labelName, email]);
-
-        console.log("Existing label result: ", existingLabel); 
 
         if (existingLabel && existingLabel[0] && existingLabel[0][0]) {
             const count = existingLabel[0][0]["label_count"];
@@ -420,7 +433,6 @@ async function acceptSharedLabel(sharedId, recipientEmail) {
 async function doesEmailExist(email) {
     let db;
     try {
-        // Establish database connection
         db = await mysql.createConnection(config);
 
         const [rows] = await db.query('CALL check_email_exists(?, @exists)', [email]);
@@ -431,7 +443,7 @@ async function doesEmailExist(email) {
 
     } catch (error) {
         console.error('Error checking email existence:', error);
-        return false; // Assume false if there's an error
+        return false; 
     } finally {
         if (db && db.end) await db.end();
     }
@@ -549,6 +561,48 @@ async function getAllUsers()
 }
 
 
+async function getNonAdminUsers() {
+    const db = await mysql.createConnection(config);
+    const sql = 'CALL get_non_admin_users()';
+    const [rows] = await db.query(sql);
+    await db.end();
+    return rows[0];
+}
+
+
+
+
+async function accountActivationToggle(email, isActive) {
+    
+        const db = await mysql.createConnection(config);
+        let query;
+        if (isActive) {
+            query = 'CALL activate_account(?)';
+        } else {
+            query = 'CALL deactivate_account(?)';
+        }
+        await db.query(query, [email]);
+        await db.end();
+
+}
+
+
+async function getUsersWithStorageData() {
+    const db = await mysql.createConnection(config);
+    const sql = 'CALL get_non_admin_users()';
+    const [users] = await db.query(sql);
+    await db.end();
+
+    for (const user of users[0]) {
+        user.total_storage_used = await getTotalStorageUsed(user.email); 
+    }
+
+    return users[0];
+}
+
+
+
+
 
 module.exports = {
     "registerUser": registerUser,
@@ -556,6 +610,7 @@ module.exports = {
     isGoogleRegistered,
     userVerificationByToken,
     userLogIn,
+    isAdmin,
     isEmailVerified,
     isEmailReg,
     check_if_label_name_exists,
@@ -582,5 +637,8 @@ module.exports = {
     verifyDeleteToken,
     updateLastLogin,
     getInactiveUsers,
-    getAllUsers
+    getAllUsers,
+    getNonAdminUsers,
+    accountActivationToggle,
+    getUsersWithStorageData
 };

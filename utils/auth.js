@@ -9,11 +9,11 @@ function isAuthenticated(req, res, next) {
 
 function isAdmin(req, res, next)
 {
-    if(req.session && res.session.is_admin)
+    if(req.session && req.session.is_admin)
     {
         return next();
     } else{
-        res.statis(403).send('Access denied. Admins only');
+        res.status(403).send('Access denied, only admins can access');
     }
 }
 
