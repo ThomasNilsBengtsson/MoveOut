@@ -489,24 +489,82 @@ router.post('/label/:labelId/edit', isAuthenticated, upload.fields([
     }
 });
 
-
 router.post('/label/:labelId/delete', isAuthenticated, async (req, res) => {
+    console.log('Delete label route hit');
     const labelId = req.params.labelId;
     const email = req.session.email;
-    const label = await moveout.get_label_by_id(labelId);
+
+    const existingLabel = await moveout.getSpecificLabelByUser(labelId, email);
+    console.log('Existing label:', existingLabel);
+
+    if (!existingLabel) {
+        return res.status(404).send('Label not found.');
+    }
+
+    let imagePaths = [];
+    let audioPaths = [];
+
+    if (existingLabel.image_path && existingLabel.image_path !== 'null') {
+        if (typeof existingLabel.image_path === 'string') {
+            try {
+                imagePaths = JSON.parse(existingLabel.image_path);
+            } catch (error) {
+                console.error('Failed to parse image_path as JSON:', error);
+                return res.status(500).send('An error occurred while parsing image paths.');
+            }
+        } else if (Array.isArray(existingLabel.image_path)) {
+            imagePaths = existingLabel.image_path;
+        }
+    }
+
+    if (existingLabel.audio_path && existingLabel.audio_path !== 'null') {
+        if (typeof existingLabel.audio_path === 'string') {
+            try {
+                audioPaths = JSON.parse(existingLabel.audio_path);
+            } catch (error) {
+                console.error('Failed to parse audio_path as JSON:', error);
+                return res.status(500).send('An error occurred while parsing audio paths.');
+            }
+        } else if (Array.isArray(existingLabel.audio_path)) {
+            audioPaths = existingLabel.audio_path;
+        }
+    }
+
+    for (const imagePath of imagePaths) {
+        if (typeof imagePath === 'string') {
+            try {
+                const fullPath = path.join(__dirname, '..', 'public', imagePath);
+                await fs.promises.unlink(fullPath);
+                console.log(`Deleted image file: ${fullPath}`);
+            } catch (err) {
+                console.error(`Failed to delete image file: ${fullPath}`, err);
+            }
+        }
+    }
+
+    for (const audioPath of audioPaths) {
+        if (typeof audioPath === 'string') {
+            try {
+                const fullPath = path.join(__dirname, '..', 'public', audioPath);
+                await fs.promises.unlink(fullPath);
+                console.log(`Deleted audio file: ${fullPath}`);
+            } catch (err) {
+                console.error(`Failed to delete audio file: ${fullPath}`, err);
+            }
+        }
+    }
 
     const labelFilePattern = path.join(
-        __dirname, 
-        '..', 
-        'public', 
-        'labels', 
-        email, 
+        __dirname,
+        '..',
+        'public',
+        'labels',
+        email,
         `qr_code_${labelId}.*`
     );
 
-    const files = await glob(labelFilePattern);
-
-    for (const file of files) {
+    const labelFiles = await glob(labelFilePattern);
+    for (const file of labelFiles) {
         try {
             await fs.promises.unlink(file);
             console.log(`Deleted label file: ${file}`);
@@ -514,9 +572,13 @@ router.post('/label/:labelId/delete', isAuthenticated, async (req, res) => {
             console.error(`Failed to delete label file: ${file}`, err);
         }
     }
-    await moveout.deleteLabel(labelId)
-    res.redirect("/home");     
+
+    await moveout.deleteLabel(labelId);
+    console.log('Label and all associated files deleted.');
+
+    res.redirect("/home");
 });
+
 
 
 

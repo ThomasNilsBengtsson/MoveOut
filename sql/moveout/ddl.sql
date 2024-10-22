@@ -52,7 +52,7 @@ MODIFY audio_path JSON;
 ALTER TABLE qr_code_labels
 MODIFY image_path JSON;
 
-ALTER TABLE qr_code_labels ADD CONSTRAINT unique_label_name UNIQUE (label_name);
+ALTER TABLE qr_code_labels ADD UNIQUE INDEX unique_label_name (email, label_name);
 
 
 
