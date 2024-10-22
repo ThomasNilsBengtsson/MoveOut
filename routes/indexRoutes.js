@@ -288,11 +288,11 @@ router.post('/create-label', isAuthenticated, upload.fields([
     const selectedLabelDesign = req.body.labelDesign;
 
     if (selectedLabelDesign === 'label1') {
-        backgroundImagePath = 'public/background-images/label-image-black.png';
+        backgroundImagePath = 'public/background-images/label-image-flammable.png';
     } else if (selectedLabelDesign === 'label2') {
-        backgroundImagePath = 'public/background-images/label-image-yellow.png';
+        backgroundImagePath = 'public/background-images/label-image-heavy.png';
     } else if (selectedLabelDesign === 'label3') {
-        backgroundImagePath = 'public/background-images/label-image-gray.png';
+        backgroundImagePath = 'public/background-images/label-image-fragile.png';
     }
 
     const qrContent = `https://85af-2001-6b0-2a-c280-bdc1-f512-44f2-213.ngrok-free.app/label/${labelId}?email=${encodeURIComponent(email)}`; 

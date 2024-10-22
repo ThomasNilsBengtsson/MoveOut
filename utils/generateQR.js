@@ -17,7 +17,7 @@ async function overlayQRCodeOnImage(text, imagePath, email, labelId, labelTitle)
 
   const textSvg = `
     <svg width="300" height="50">
-      <text x="50%" y="50%" font-size="24" text-anchor="middle" dominant-baseline="middle" fill="white">
+      <text x="50%" y="50%" font-size="24" text-anchor="middle" dominant-baseline="middle" fill="black">
         ${labelTitle}
       </text>
     </svg>
@@ -27,7 +27,8 @@ async function overlayQRCodeOnImage(text, imagePath, email, labelId, labelTitle)
 
   const metadata = await sharp(resizedBackground).metadata();
   const x = Math.floor((metadata.width - 100) / 2);
-  const y = Math.floor((metadata.height - 100) / 2);
+  const y = Math.floor((metadata.height * 3 / 4) - (100 / 2));
+  
 
   await sharp(resizedBackground)
     .composite([
