@@ -148,7 +148,7 @@ textarea {
 
 <div class="form-container">
     <h1>Edit Label</h1>
-
+    <div id="error-message" style="color: red;"></div>
     <form id="editLabelForm" action="/label/<%= label.label_id %>/edit" method="POST" enctype="multipart/form-data">
         <div class="form-group">
             <label for="contentType">Select Content Type to Edit:</label>
@@ -161,17 +161,17 @@ textarea {
 
         <div class="form-group" id="textContentInput" style="display: none;">
             <label for="textContent">Edit Text Content:</label>
-            <textarea name="textContent" id="textContent"><%= label.text_content %></textarea>
+            <textarea name="textContent" id="textContent" maxlength="100"><%= label.text_content %></textarea>
         </div>
 
         <div class="form-group" id="imageContentInput" style="display: none;">
             <label for="imageContent">Upload New Image:</label>
-            <input type="file" name="imageContent" id="imageContent" accept="image/*" multiple>
+            <input type="file" name="imageContent" id="imageContent" accept="image/*">
         </div>
 
         <div class="form-group" id="audioContentInput" style="display: none;">
             <label for="audioContent">Upload New Audio:</label>
-            <input type="file" name="audioContent" id="audioContent" accept="audio/*" multiple>
+            <input type="file" name="audioContent" id="audioContent" accept="audio/*">
         </div>
 
         <div class="form-group">
@@ -284,6 +284,36 @@ textarea {
 
       
         toggleContentInputs();
+
+        const form = document.getElementById('editLabelForm');
+        form.addEventListener('submit', async function(event) {
+            event.preventDefault(); 
+
+            const formData = new FormData(form);
+
+            try {
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    const errorMessage = await response.text();
+                    if (response.status === 413) {
+                        document.getElementById('error-message').textContent = "The total storage for this label exceeds the maximum allowed limit 10 MB.";
+                    } else if (response.status === 400) {
+                        document.getElementById('error-message').textContent = "Label name must be unique. This label name already exists.";
+                    } else {
+                        document.getElementById('error-message').textContent = errorMessage;
+                    }
+                } else {
+                    window.location.href = response.url;
+                }
+            } catch (error) {
+
+                document.getElementById('error-message').textContent = 'An unexpected error occurred. Please try again later.';
+            }
+        });
     });
 
 </script>

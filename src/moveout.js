@@ -304,11 +304,11 @@ async function updateLabel(labelId, { text_content, image_path, audio_path, is_l
     return result;
 }
 
-async function shareLabel(labelId, labelName, senderEmail, recipientEmail) {
+async function shareLabel(labelId, labelName, senderEmail, recipientEmail, backgroundImagePath) {
 
         const db = await mysql.createConnection(config);
-        const sql = `CALL share_label(?, ?, ?, ?)`;
-        await db.query(sql, [labelId, labelName, senderEmail, recipientEmail]);
+        const sql = `CALL share_label(?, ?, ?, ?, ?)`;
+        await db.query(sql, [labelId, labelName, senderEmail, recipientEmail, backgroundImagePath]);
         await db.end();
 }
 
@@ -345,26 +345,106 @@ async function acceptSharedLabel(sharedId, recipientEmail) {
        
         let imagePaths = [];
         let audioPaths = [];
-
         if (sharedLabel.image_path) {
-            try {
-      
-                imagePaths = JSON.parse(sharedLabel.image_path);
-            } catch (e) {
-              
-                imagePaths = [sharedLabel.image_path];
+            if (typeof sharedLabel.image_path === 'string') {
+                try {
+                    let parsedPaths = JSON.parse(sharedLabel.image_path);
+        
+                    // Flatten if nested array is found
+                    if (Array.isArray(parsedPaths) && Array.isArray(parsedPaths[0])) {
+                        parsedPaths = parsedPaths.flat();
+                    }
+        
+                    imagePaths = parsedPaths;
+                } catch (e) {
+                    console.error('Error parsing image path:', e);
+                    if (sharedLabel.image_path.startsWith('/')) {
+                        imagePaths = [sharedLabel.image_path];
+                    } else {
+                        console.error('Invalid image path format:', sharedLabel.image_path);
+                    }
+                }
+            } else if (Array.isArray(sharedLabel.image_path)) {
+                imagePaths = sharedLabel.image_path;
+            } else {
+                console.error('Unexpected format for image path:', sharedLabel.image_path);
             }
         }
 
         if (sharedLabel.audio_path) {
-            try {
-         
-                audioPaths = JSON.parse(sharedLabel.audio_path);
-            } catch (e) {
-               
-                audioPaths = [sharedLabel.audio_path];
+            if (typeof sharedLabel.audio_path === 'string') {
+                try {
+                    let parsedPaths = JSON.parse(sharedLabel.audio_path);
+        
+                    // Flatten if nested array is found
+                    if (Array.isArray(parsedPaths) && Array.isArray(parsedPaths[0])) {
+                        parsedPaths = parsedPaths.flat();
+                    }
+        
+                    audioPaths = parsedPaths;
+                } catch (e) {
+                    console.error('Error parsing audio path:', e);
+                    if (sharedLabel.audio_path.startsWith('/')) {
+                        audioPaths = [sharedLabel.audio_path];
+                    } else {
+                        console.error('Invalid audio path format:', sharedLabel.audio_path);
+                    }
+                }
+            } else if (Array.isArray(sharedLabel.audio_path)) {
+                audioPaths = sharedLabel.audio_path;
+            } else {
+                console.error('Unexpected format for audio path:', sharedLabel.audio_path);
             }
         }
+     /*    if (sharedLabel.image_path) {
+            if (typeof sharedLabel.image_path === 'string') {
+                try {
+                    // Attempt to parse the image_path, accounting for potential nested arrays
+                    let parsedPaths = JSON.parse(sharedLabel.image_path);
+
+                    // If parsedPaths is an array and the first element is also an array, flatten it
+                    if (Array.isArray(parsedPaths) && Array.isArray(parsedPaths[0])) {
+                        parsedPaths = parsedPaths.flat();
+                    }
+
+                    imagePaths = parsedPaths;
+                    console.log('Parsed image paths:', imagePaths);
+                } catch (e) {
+                    console.error('Error parsing image path:', e);
+                    if (sharedLabel.image_path.startsWith('/')) {
+                        imagePaths = [sharedLabel.image_path];
+                    } else {
+                        console.error('Invalid image path format:', sharedLabel.image_path);
+                    }
+                }
+            } else if (Array.isArray(sharedLabel.image_path)) {
+                imagePaths = sharedLabel.image_path;
+                console.log('Image paths already an array:', imagePaths);
+            } else {
+                console.error('Unexpected format for image path:', sharedLabel.image_path);
+            }
+        }
+
+        // Handle audio paths similarly
+        if (sharedLabel.audio_path) {
+            if (typeof sharedLabel.audio_path === 'string') {
+                try {
+                    audioPaths = JSON.parse(sharedLabel.audio_path);
+                } catch (e) {
+                    console.error('Error parsing audio path:', e);
+                    if (sharedLabel.audio_path.startsWith('/')) {
+                        audioPaths = [sharedLabel.audio_path];
+                    } else {
+                        console.error('Invalid audio path format:', sharedLabel.audio_path);
+                    }
+                }
+            } else if (Array.isArray(sharedLabel.audio_path)) {
+                audioPaths = sharedLabel.audio_path;
+            } else {
+                console.error('Unexpected format for audio path:', sharedLabel.audio_path);
+            }
+        } */
+
 
         const baseDir = path.resolve(__dirname, '../public');
         const recipientImageDir = path.join(baseDir, 'uploads', 'images', recipientEmail);
@@ -381,44 +461,63 @@ async function acceptSharedLabel(sharedId, recipientEmail) {
         let newImagePaths = [];
         let newAudioPaths = [];
 
-        if (imagePaths.length > 0) {
-            imagePaths.forEach(imagePath => {
+        for (const imagePath of imagePaths) {
+            if (typeof imagePath === 'string') {
                 const oldImagePath = path.join(baseDir, imagePath);
                 const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
                 const newImagePath = path.join('uploads', 'images', recipientEmail, uniqueSuffix + path.extname(imagePath));
                 const targetImagePath = path.join(baseDir, newImagePath);
                 fs.copyFileSync(oldImagePath, targetImagePath);
                 newImagePaths.push('/' + newImagePath);
-            });
+            }
         }
 
-        if (audioPaths.length > 0) {
-            audioPaths.forEach(audioPath => {
+        // Copy audio files to the recipient's folder
+        for (const audioPath of audioPaths) {
+            if (typeof audioPath === 'string') {
                 const oldAudioPath = path.join(baseDir, audioPath);
                 const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
                 const newAudioPath = path.join('uploads', 'audio', recipientEmail, uniqueSuffix + path.extname(audioPath));
                 const targetAudioPath = path.join(baseDir, newAudioPath);
                 fs.copyFileSync(oldAudioPath, targetAudioPath);
-                newAudioPaths.push("/" + newAudioPath);
-            });
+                newAudioPaths.push('/' + newAudioPath);
+            }
         }
+        console.log('New image paths:', newImagePaths);
+        console.log('New audio paths:', newAudioPaths); 
 
-        const[result] = await db.query('CALL accept_shared_label(?, ?, ?, ?, ?, ?)', [
+        //ta bort ifall måste
+        if (Array.isArray(newImagePaths) && Array.isArray(newImagePaths[0])) {
+            newImagePaths = newImagePaths.flat();
+        }
+        if (Array.isArray(newAudioPaths) && Array.isArray(newAudioPaths[0])) {
+            newAudioPaths = newAudioPaths.flat();
+        }
+        
+        // Ensure the new paths are consistently stored as stringified JSON arrays
+        const imagePathsJson = JSON.stringify(newImagePaths).replace(/\\/g, '');
+        const audioPathsJson = JSON.stringify(newAudioPaths).replace(/\\/g, '');
+        
+        console.log('Final newImagePaths before saving:', imagePathsJson);
+
+        const[result] = await db.query('CALL accept_shared_label(?, ?, ?, ?, ?, ?, ?)', [
             recipientEmail,
             sharedLabel.label_name,
             sharedLabel.text_content,
-            JSON.stringify(newImagePaths),
-            JSON.stringify(newAudioPaths),
-            sharedLabel.content_type
+            imagePathsJson,
+            audioPathsJson,
+            sharedLabel.content_type,
+            sharedLabel.background_image_path 
         ]);
 
         const newLabelId = result[0][0].newLabelId;
         const newLabelName = result[0][0].newLabelName;
-
+        const backgroundImagePath = result[0][0].backgroundImagePath;
 
         return {
             newLabelId,
-            newLabelName
+            newLabelName,
+            backgroundImagePath
         };
 
     } catch (error) {
@@ -602,6 +701,39 @@ async function getUsersWithStorageData() {
 
 
 
+async function updateBackgroundImage(labelId, email, backgroundImagePath) {
+    const db = await mysql.createConnection(config);
+   
+    const sql = `CALL update_background_image(?, ?, ?)`;
+    await db.query(sql, [labelId, email, backgroundImagePath]);
+
+    await db.end();
+}
+
+async function getBackgroundImage(labelId, email) {
+    const db = await mysql.createConnection(config);
+
+    const sql = `CALL get_background_image(?, ?)`;
+    const [rows] = await db.query(sql, [labelId, email]);
+
+    if (rows[0].length === 0) {
+        throw new Error('No label with this label ID and email was found.');
+    }
+
+    const backgroundImagePath = rows[0][0].background_image_path;
+    await db.end();
+    return backgroundImagePath;
+
+}
+
+
+async function updateLabelFilePaths(labelId, image_path, audio_path) {
+    const db = await mysql.createConnection(config);
+    const sql = `CALL update_label_file_paths(?, ?, ?)`;
+    const [result] = await db.query(sql, [labelId, image_path, audio_path]);
+    await db.end();
+    return result;
+}
 
 
 module.exports = {
@@ -640,5 +772,8 @@ module.exports = {
     getAllUsers,
     getNonAdminUsers,
     accountActivationToggle,
-    getUsersWithStorageData
+    getUsersWithStorageData,
+    updateBackgroundImage,
+    getBackgroundImage,
+    updateLabelFilePaths
 };

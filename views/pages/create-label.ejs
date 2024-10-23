@@ -1,270 +1,341 @@
 <%- include("./../partials/header.ejs", { showNavbar: true }) %>
 
 <style>
-   
-    #create-label-page {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 100vh; 
-        padding: 0;
-    }
+  #create-label-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    padding: 0;
+  }
 
-    #create-label-page h1 {
-        color: #333;
-        text-align: center;
-        margin-bottom: 20px;
-    }
+  #create-label-page h1 {
+    color: #333;
+    text-align: center;
+    margin-bottom: 20px;
+  }
 
-    #create-label-page form {
-        background: #ffffff;
-        border-radius: 10px;
-        padding: 20px;
-        max-width: 600px;
-        width: 100%;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
+  #create-label-page form {
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 20px;
+    max-width: 600px;
+    width: 100%;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
 
-    #create-label-page label {
-        display: block;
-        margin-bottom: 8px;
-        font-weight: bold;
-        color: #555;
-    }
+  #create-label-page label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #555;
+  }
 
-    #create-label-page select,
-    #create-label-page textarea,
-    #create-label-page input[type="file"],
-    #create-label-page input[type="text"] {
-        width: 100%;
-        padding: 10px;
-        margin-bottom: 20px;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-        font-size: 14px;
-    }
+  #create-label-page select,
+  #create-label-page textarea,
+  #create-label-page input[type="file"],
+  #create-label-page input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+  }
 
-    #create-label-page textarea {
-        height: 100px;
-        resize: vertical;
-    }
+  #create-label-page textarea {
+    height: 100px;
+    resize: vertical;
+  }
 
-    #create-label-page .label-option {
-        display: inline-block;
-        margin-right: 10px;
-        text-align: center;
-    }
+  #create-label-page .label-option {
+    display: inline-block;
+    margin-right: 10px;
+    text-align: center;
+  }
 
-    #create-label-page .label-option img {
-        border: 2px solid #ddd;
-        border-radius: 5px;
-        transition: border-color 0.3s ease;
-    }
+  #create-label-page .label-option img {
+    border: 2px solid #ddd;
+    border-radius: 5px;
+    transition: border-color 0.3s ease;
+  }
 
-    #create-label-page .label-option input[type="radio"] {
-        display: none;
-    }
+  #create-label-page .label-option input[type="radio"] {
+    display: none;
+  }
 
-    #create-label-page .label-option input[type="radio"]:checked + label img {
-        border-color: #007bff;
-    }
+  #create-label-page .label-option input[type="radio"]:checked + label img {
+    border-color: #007bff;
+  }
 
-    #create-label-page .toggle-container {
-        display: flex;
-        align-items: center;
-        margin-bottom: 20px;
-    }
+  #create-label-page .toggle-container {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+  }
 
-    #create-label-page .toggle-switch {
-        position: relative;
-        display: inline-block;
-        width: 50px;
-        height: 25px;
-        margin-right: 10px;
-    }
+  #create-label-page .toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 25px;
+    margin-right: 10px;
+  }
 
-    #create-label-page .toggle-switch input {
-        opacity: 0;
-        width: 0;
-        height: 0;
-    }
+  #create-label-page .toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
 
-    #create-label-page .slider {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: #ddd;
-        border-radius: 25px;
-        transition: 0.4s;
-    }
+  #create-label-page .slider {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ddd;
+    border-radius: 25px;
+    transition: 0.4s;
+  }
 
-    #create-label-page .slider:before {
-        position: absolute;
-        content: "";
-        height: 19px;
-        width: 19px;
-        left: 3px;
-        bottom: 3px;
-        background-color: white;
-        border-radius: 50%;
-        transition: 0.4s;
-    }
+  #create-label-page .slider:before {
+    position: absolute;
+    content: "";
+    height: 19px;
+    width: 19px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    border-radius: 50%;
+    transition: 0.4s;
+  }
 
-    #create-label-page input:checked + .slider {
-        background-color: #007bff;
-    }
+  #create-label-page input:checked + .slider {
+    background-color: #007bff;
+  }
 
-    #create-label-page input:checked + .slider:before {
-        transform: translateX(25px);
-    }
+  #create-label-page input:checked + .slider:before {
+    transform: translateX(25px);
+  }
 
-    #create-label-page .toggle-label {
-        font-weight: bold;
-        color: #555;
-    }
+  #create-label-page .toggle-label {
+    font-weight: bold;
+    color: #555;
+  }
 
-    #create-label-page button {
-        background-color: #007bff;
-        color: white;
-        border: none;
-        padding: 12px 20px;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 16px;
-        width: 100%;
-        margin-top: 20px;
-        transition: background-color 0.3s ease;
-    }
+  #create-label-page button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    width: 100%;
+    margin-top: 20px;
+    transition: background-color 0.3s ease;
+  }
 
-    #create-label-page button:hover {
-        background-color: #0056b3;
-    }
+  #create-label-page button:hover {
+    background-color: #0056b3;
+  }
 </style>
 
 <main id="create-label-page">
-   
+  <form
+    id="createLabelForm"
+    action="/create-label"
+    method="POST"
+    enctype="multipart/form-data"
+  >
+    <div>
+      <label for="labelName">Label Name:</label>
+      <input
+        type="text"
+        name="labelName"
+        id="labelName"
+        required
+        maxlength="15"
+      />
+    </div>
 
-    <form id="createLabelForm" action="/create-label" method="POST" enctype="multipart/form-data">
-        <div>
-            <label for="labelName">Label Name:</label>
-            <input type="text" name="labelName" id="labelName" required maxlength="15">
-        </div>
+    <label for="contentType">Select Content Type:</label>
+    <select name="contentType" id="contentType" required>
+      <option value="text">Text</option>
+      <option value="image">Image</option>
+      <option value="audio">Audio</option>
+    </select>
 
-        <label for="contentType">Select Content Type:</label>
-        <select name="contentType" id="contentType" required>
-            <option value="text">Text</option>
-            <option value="image">Image</option>
-            <option value="audio">Audio</option>
-        </select>
+    <div id="textContentInput">
+      <label for="textContent">Enter Text Content:</label>
+      <textarea name="textContent" id="textContent" maxlength="100"></textarea>
+    </div>
 
-        <div id="textContentInput">
-            <label for="textContent">Enter Text Content:</label>
-            <textarea name="textContent" id="textContent"></textarea>
-        </div>
+    <div id="imageContentInput" style="display: none">
+      <label for="imageContent">Upload Image:</label>
+      <input
+        type="file"
+        name="imageContent"
+        id="imageContent"
+        accept="image/*"
+      />
+    </div>
 
-        <div id="imageContentInput" style="display: none;">
-            <label for="imageContent">Upload Image:</label>
-            <input type="file" name="imageContent" id="imageContent" accept="image/*">
-        </div>
+    <div id="audioContentInput" style="display: none">
+      <label for="audioContent">Upload Audio:</label>
+      <input
+        type="file"
+        name="audioContent"
+        id="audioContent"
+        accept="audio/*"
+      />
+    </div>
 
-        <div id="audioContentInput" style="display: none;">
-            <label for="audioContent">Upload Audio:</label>
-            <input type="file" name="audioContent" id="audioContent" accept="audio/*">
-        </div>
+    <div id="labelDesigns">
+      <label for="labelDesign">Choose Label Design:</label>
+      <div class="label-option">
+        <input
+          type="radio"
+          id="label1"
+          name="labelDesign"
+          value="label1"
+          required
+        />
+        <label for="label1">
+          <img
+            src="/background-images/label-image-flammable.png"
+            alt="Label Design 1"
+            width="100"
+            height="100"
+          />
+        </label>
+      </div>
+      <div class="label-option">
+        <input
+          type="radio"
+          id="label2"
+          name="labelDesign"
+          value="label2"
+          required
+        />
+        <label for="label2">
+          <img
+            src="/background-images/label-image-heavy.png"
+            alt="Label Design 2"
+            width="100"
+            height="100"
+          />
+        </label>
+      </div>
+      <div class="label-option">
+        <input
+          type="radio"
+          id="label3"
+          name="labelDesign"
+          value="label3"
+          required
+        />
+        <label for="label3">
+          <img
+            src="/background-images/label-image-fragile.png"
+            alt="Label Design 3"
+            width="100"
+            height="100"
+          />
+        </label>
+      </div>
+    </div>
 
-        <div id="labelDesigns">
-            <label for="labelDesign">Choose Label Design:</label>
-            <div class="label-option">
-                <input type="radio" id="label1" name="labelDesign" value="label1" required>
-                <label for="label1">
-                    <img src="/background-images/label-image-flammable.png" alt="Label Design 1" width="100" height="100">
-                </label>
-            </div>
-            <div class="label-option">
-                <input type="radio" id="label2" name="labelDesign" value="label2" required>
-                <label for="label2">
-                    <img src="/background-images/label-image-heavy.png" alt="Label Design 2" width="100" height="100">
-                </label>
-            </div>
-            <div class="label-option">
-                <input type="radio" id="label3" name="labelDesign" value="label3" required>
-                <label for="label3">
-                    <img src="/background-images/label-image-fragile.png" alt="Label Design 3" width="100" height="100">
-                </label>
-            </div>
-        </div>
+    <div class="toggle-container">
+      <label class="toggle-switch">
+        <input
+          type="checkbox"
+          name="isLabelPrivate"
+          id="userOption"
+          value="on"
+        />
+        <span class="slider"></span>
+      </label>
+      <span class="toggle-label">Private label</span>
+    </div>
 
-        <div class="toggle-container">
-            <label class="toggle-switch">
-                <input type="checkbox" name="isLabelPrivate" id="userOption" value="on">
-                <span class="slider"></span>
-            </label>
-            <span class="toggle-label">Private label</span>
-        </div>
-
-        <div id="error-message" style="color: red;"></div>
-        <button type="submit">Create Label</button>
-    </form>
+    <div id="error-message" style="color: red"></div>
+    <button type="submit">Create Label</button>
+  </form>
 </main>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
+  document.addEventListener("DOMContentLoaded", function () {
     const contentTypeSelect = document.getElementById("contentType");
     const textContentInput = document.getElementById("textContentInput");
+    const textContentField = document.getElementById("textContent");
     const imageContentInput = document.getElementById("imageContentInput");
+    const imageContentField = document.getElementById("imageContent");
     const audioContentInput = document.getElementById("audioContentInput");
+    const audioContentField = document.getElementById("audioContent");
 
-   
     function handleContentTypeChange() {
-        
         textContentInput.style.display = "none";
-        imageContentInput.style.display = "none";
-        audioContentInput.style.display = "none";
+        textContentField.required = false;
 
-    
-        if (contentTypeSelect.value === "text") {
-            textContentInput.style.display = "block";
-        } else if (contentTypeSelect.value === "image") {
-            imageContentInput.style.display = "block";
-        } else if (contentTypeSelect.value === "audio") {
-            audioContentInput.style.display = "block";
-        }
+        imageContentInput.style.display = "none";
+        imageContentField.required = false;
+
+        audioContentInput.style.display = "none";
+        audioContentField.required = false;
+
+      if (contentTypeSelect.value === "text") {
+        textContentInput.style.display = "block";
+        textContentField.required = true;
+      } else if (contentTypeSelect.value === "image") {
+        imageContentInput.style.display = "block";
+        imageContentField.required = true;
+      } else if (contentTypeSelect.value === "audio") {
+        audioContentInput.style.display = "block";
+        audioContentField.required = true;
+      }
     }
 
-   
     contentTypeSelect.addEventListener("change", handleContentTypeChange);
 
-   
     handleContentTypeChange();
-});
+  });
 
-
-    const form = document.getElementById('createLabelForm');
-    form.addEventListener('submit', async function (event) {
-    event.preventDefault(); 
+  const form = document.getElementById("createLabelForm");
+  form.addEventListener("submit", async function (event) {
+    event.preventDefault();
 
     const formData = new FormData(form);
 
+
     try {
-    const response = await fetch(form.action, {
-        method: 'POST',
+      const response = await fetch(form.action, {
+        method: "POST",
         body: formData,
-    });
+      });
 
-    if (!response.ok) {
-        
-        const result = await response.json();
-        document.getElementById('error-message').textContent = result;
-    } else {
-        
-        window.location.href = response.url; 
-    }
+      if (response.ok) {
+        // Redirect to the URL provided by the response
+        window.location.href = response.url;
+      } else {
+        // Handle different types of errors based on the response status code
+        const errorMessage = await response.text();
+        if (response.status === 413) {
+          document.getElementById("error-message").textContent =
+            "The total storage for this label exceeds the maximum allowed limit of 10 MB.";
+        } else if (response.status === 400) {
+          document.getElementById("error-message").textContent =
+            "Label name must be unique. This label name already exists.";
+        } else {
+          document.getElementById("error-message").textContent = errorMessage;
+        }
+      }
     } catch (error) {
-    document.getElementById('error-message').textContent = 'Label name must be unique. This label name already exists.';
+      // Catch network or other unexpected errors
+      document.getElementById("error-message").textContent =
+        "An unexpected error occurred. Please try again later.";
     }
-    });
-
+  });
 </script>
 <%- include("./../partials/footer.ejs") %>

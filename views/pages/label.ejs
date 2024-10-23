@@ -1,27 +1,69 @@
 <%- include("./../partials/header.ejs", { showNavbar: false }) %>
 
-    <% if(label.text_content) { %>
-        <h2><%= label.text_content || 'No text content yet.' %></h2>
-    <% } %>
-    
-    <% if (Array.isArray(label.image_path) && label.image_path.length > 0) { %>
-        <h1>Your Images</h1>
-        <% label.image_path.forEach(function(image) { %>
-            <% if (image && image !== 'null') { %>
-                <img src="<%= image %>" alt="User image" style="max-width: 100%; margin-bottom: 10px;">
-            <% } %>
-        <% }) %>
-    <% } %>
-    
-    <% if (Array.isArray(label.audio_path) && label.audio_path.length > 0) { %>
-        <h1>Audio</h1>
-        <% label.audio_path.forEach(function(audio) { %>
-            <% if (audio && audio !== 'null') { %>
-                <audio controls>
-                    <source src="<%= audio %>" type="audio/mpeg">
-                </audio>
-            <% } %>
-        <% }) %>
-    <% } %>
+<style>
+  #label-content {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  #label-content h1, #label-content h2 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 20px;
+  }
+
+  .image-container, .audio-container {
+    margin-bottom: 30px;
+  }
+
+  .image-container img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin: 10px auto;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .audio-container audio {
+    display: block;
+    margin: 10px auto;
+    width: 100%;
+  }
+</style>
+
+<div id="label-content">
+  <% if(label.text_content) { %>
+    <h2><%= label.text_content || 'No text content yet.' %></h2>
+  <% } %>
+
+  <% if (Array.isArray(label.image_path) && label.image_path.length > 0) { %>
+    <div class="image-container">
+      <h1>Your Images</h1>
+      <% label.image_path.forEach(function(image) { %>
+        <% if (image && image !== 'null') { %>
+          <img src="<%= image %>" alt="User image">
+        <% } %>
+      <% }) %>
+    </div>
+  <% } %>
+
+  <% if (Array.isArray(label.audio_path) && label.audio_path.length > 0) { %>
+    <div class="audio-container">
+      <h1>Audio</h1>
+      <% label.audio_path.forEach(function(audio) { %>
+        <% if (audio && audio !== 'null') { %>
+          <audio controls>
+            <source src="<%= audio %>" type="audio/mpeg">
+          </audio>
+        <% } %>
+      <% }) %>
+    </div>
+  <% } %>
+</div>
 
 <%- include("./../partials/footer.ejs") %>

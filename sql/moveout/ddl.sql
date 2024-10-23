@@ -53,6 +53,7 @@ ALTER TABLE qr_code_labels
 MODIFY image_path JSON;
 
 ALTER TABLE qr_code_labels ADD UNIQUE INDEX unique_label_name (email, label_name);
+ALTER TABLE qr_code_labels ADD COLUMN background_image_path VARCHAR(255);
 
 
 
@@ -68,9 +69,68 @@ CREATE TABLE shared_labels (
     FOREIGN KEY (recipient_email) REFERENCES register(email)
 );
 
+ALTER TABLE shared_labels ADD COLUMN background_image_path VARCHAR(255);
+
 --
 --Procedures
 --
+
+
+DROP PROCEDURE IF EXISTS update_label_file_paths;
+DELIMITER ;;
+
+CREATE PROCEDURE update_label_file_paths(
+    IN f_label_id INT,
+    IN f_image_path JSON,
+    IN f_audio_path JSON
+)
+BEGIN 
+    UPDATE qr_code_labels
+    SET 
+        image_path = f_image_path,
+        audio_path = f_audio_path
+    WHERE
+        label_id = f_label_id;
+END ;;
+
+DELIMITER ;
+
+
+
+
+
+DROP PROCEDURE IF EXISTS get_background_image;
+DELIMITER ;;
+
+CREATE PROCEDURE get_background_image(
+    IN f_label_id INT,
+    IN f_email VARCHAR(100)
+)
+BEGIN
+    SELECT background_image_path
+    FROM qr_code_labels
+    WHERE label_id = f_label_id AND email = f_email;
+END ;;
+
+DELIMITER ;
+
+
+
+DROP PROCEDURE IF EXISTS update_background_image;
+DELIMITER ;;
+
+CREATE PROCEDURE update_background_image(
+    IN f_label_id INT,
+    IN f_email VARCHAR(100),
+    IN f_background_image_path VARCHAR(255)
+)
+BEGIN
+    UPDATE qr_code_labels
+    SET background_image_path = f_background_image_path
+    WHERE label_id = f_label_id AND email = f_email;
+END ;;
+
+DELIMITER ;
 
 
 
@@ -289,6 +349,7 @@ BEGIN
         l.audio_path, 
         l.content_type, 
         l.is_label_private, 
+        l.background_image_path,
         s.sender_email, 
         s.recipient_email, 
         s.shared_date
@@ -314,7 +375,8 @@ CREATE PROCEDURE accept_shared_label(
     IN f_text_content TEXT,
     IN f_image_path JSON,
     IN f_audio_path JSON,
-    IN f_content_type ENUM('text', 'image', 'audio')
+    IN f_content_type ENUM('text', 'image', 'audio'),
+    IN f_background_image_path VARCHAR(255)
 )
 BEGIN
     DECLARE new_label_name VARCHAR(50);
@@ -329,10 +391,10 @@ BEGIN
     END WHILE;
 
 
-    INSERT INTO qr_code_labels (email, label_name, text_content, image_path, audio_path, content_type)
-    VALUES (f_email, new_label_name, f_text_content, f_image_path, f_audio_path, f_content_type);
+    INSERT INTO qr_code_labels (email, label_name, text_content, image_path, audio_path, content_type, background_image_path)
+    VALUES (f_email, new_label_name, f_text_content, f_image_path, f_audio_path, f_content_type, f_background_image_path);
     
-    SELECT LAST_INSERT_ID() AS newLabelId, new_label_name AS newLabelName;
+    SELECT LAST_INSERT_ID() AS newLabelId, new_label_name AS newLabelName, f_background_image_path AS backgroundImagePath;
 END;;
 
 DELIMITER ;
@@ -395,11 +457,12 @@ CREATE PROCEDURE share_label(
     IN f_label_id INT,
     IN f_label_name VARCHAR(30),
     IN f_sender_email VARCHAR(100),
-    IN f_recipient_email VARCHAR(100)
+    IN f_recipient_email VARCHAR(100),
+    IN f_background_image_path VARCHAR(255)
 )
 BEGIN
-    INSERT INTO shared_labels (original_label_id, label_name, sender_email, recipient_email)
-    VALUES (f_label_id, f_label_name, f_sender_email, f_recipient_email);
+    INSERT INTO shared_labels (original_label_id, label_name, sender_email, recipient_email, background_image_path)
+    VALUES (f_label_id, f_label_name, f_sender_email, f_recipient_email, f_background_image_path);
 END ;;
 
 DELIMITER ; 
@@ -454,7 +517,7 @@ DELIMITER ;;
 CREATE PROCEDURE update_label(
     IN f_label_id INT,
     IN f_text_content TEXT,
-    IN f_image_path VARCHAR(255),
+    IN f_image_path JSON,
     IN f_audio_path JSON,
     IN f_is_label_private BOOLEAN
 )

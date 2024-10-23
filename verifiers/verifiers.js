@@ -12,11 +12,20 @@ function validateEmail(email) {
 
 function validatePassword(password) {
     const errors = {};
+
     if (password.length < 6) {
         errors.password = 'Please enter a password with more than 5 characters';
     }
+
+    const hasLettersAndNumbers = /^(?=.*[A-Za-z])(?=.*\d)/;
+
+    if (!hasLettersAndNumbers.test(password)) {
+        errors.password = 'Password must contain at least one letter and one number';
+    }
+
     return errors;
 }
+
 
 
 

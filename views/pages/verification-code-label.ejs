@@ -1,11 +1,55 @@
 <%- include("./../partials/header.ejs", { showNavbar: false }) %>
 
-<p>We've sent a 6-digit code to your email. Please enter it below to continue:</p>
-<form action="/verification-code-label" method="POST">
-    <input type="hidden" name="labelId" value="<%= labelId %>">
-    <input type="hidden" name="email" value="<%= email %>">
-    <input type="text" name="verificationCode" placeholder="Enter 6-digit code" required>
-    <button type="submit">Verify</button>
-</form>
+<style>
+  #verification-container {
+    max-width: 500px;
+    margin: 50px auto;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+  }
+
+  #verification-container p {
+    font-size: 1.2em;
+    color: #555;
+    margin-bottom: 20px;
+  }
+
+  #verification-container input[type="text"] {
+    width: calc(100% - 20px);
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 1em;
+  }
+
+  #verification-container button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.3s ease;
+  }
+
+  #verification-container button:hover {
+    background-color: #0056b3;
+  }
+</style>
+
+<div id="verification-container">
+  <p>We've sent a 6-digit code to your email. Please enter it below to continue:</p>
+  <form action="/verification-code-label" method="POST">
+      <input type="hidden" name="labelId" value="<%= labelId %>">
+      <input type="hidden" name="email" value="<%= email %>">
+      <input type="text" name="verificationCode" placeholder="Enter 6-digit code" required>
+      <button type="submit">Verify</button>
+  </form>
+</div>
 
 <%- include("./../partials/footer.ejs") %>
