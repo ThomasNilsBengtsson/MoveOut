@@ -1,13 +1,65 @@
 <%- include("./../partials/header.ejs", { showNavbar: true }) %>
 
-<main id="profile-page" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh;">
+
+<style>
+    #profile-page {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        background: #f0f4f8;
+        padding: 20px;
+    }
+
+    #profile-page h1 {
+        font-size: 2.5em;
+        color: #333;
+        margin-bottom: 20px;
+    }
+
+    .profile-info {
+        width: 100%;
+        max-width: 600px;
+        text-align: center;
+        border: 1px solid #ddd;
+        padding: 30px;
+        border-radius: 10px;
+        background: #ffffff;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .profile-info p {
+        font-size: 1.2em;
+        color: #555;
+        margin-bottom: 30px;
+    }
+
+    .deactivate-button {
+        background-color: #e74c3c;
+        color: white;
+        padding: 12px 25px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 1em;
+        transition: background-color 0.3s ease, transform 0.3s ease;
+    }
+
+    .deactivate-button:hover {
+        background-color: #c0392b;
+        transform: scale(1.05);
+    }
+</style>
+
+<main id="profile-page">
     <h1>User Profile</h1>
 
-    <div class="profile-info" style="width: 50%; text-align: center; border: 1px solid #ddd; padding: 20px; border-radius: 10px;">
+    <div class="profile-info">
         <p><strong>Email:</strong> <%= email %></p>
        
         <form action="/deactivate-account" method="POST" onsubmit="return confirm('Are you sure you want to deactivate your account?')">
-            <button type="submit" class="deactivate-button" style="background-color: #e74c3c; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Deactivate Account</button>
+            <button type="submit" class="deactivate-button">Deactivate Account</button>
         </form>
     </div>
 </main>

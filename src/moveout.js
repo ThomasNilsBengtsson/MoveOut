@@ -296,8 +296,8 @@ async function updateLabel(labelId, { text_content, image_path, audio_path, is_l
     const [result] = await db.query(sql, [
         labelId,
         text_content,
-        JSON.stringify(image_path),
-        JSON.stringify(audio_path), 
+        image_path,
+        audio_path, 
         is_label_private
     ]);
     await db.end();
