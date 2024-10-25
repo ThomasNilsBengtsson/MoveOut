@@ -320,9 +320,7 @@ router.get("/label/:labelId", async (req, res) => {
     const labelId = req.params.labelId;
     const email = req.query.email;
 
-    console.log('Fetching label for ID:', labelId);
     const label = await moveout.get_label_by_id(labelId);
-    console.log('Label info:', label);
 
     if(label.is_label_private)
     {        
@@ -331,7 +329,7 @@ router.get("/label/:labelId", async (req, res) => {
             let verficationCode = label.verification_code;
             if(!verficationCode)
                 {
-                    console.log("Verification code sent");
+                   
                     const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
                     await moveout.insert_verification_code_label(labelId, verificationCode);
                     await emailFunctions.sendVerificationCodeLabel(email, verificationCode);
@@ -496,7 +494,7 @@ router.post('/label/:labelId/edit', isAuthenticated, upload.fields([
 
         const { exceedsLimit, storageMessage } = await maxStorageContent.checkStorageLimit(imagePaths, audioPaths, newFiles);
         if (exceedsLimit) {
-            console.log("Storage limit reached. Returning 413 response with message:", storageMessage);
+            
             return res.status(413).send(storageMessage);
         }
   
@@ -520,7 +518,6 @@ router.post('/label/:labelId/delete', isAuthenticated, async (req, res) => {
     const email = req.session.email;
 
     const existingLabel = await moveout.getSpecificLabelByUser(labelId, email);
-    console.log('Existing label:', existingLabel);
 
     if (!existingLabel) {
         return res.status(404).send('Label not found.');
@@ -605,24 +602,19 @@ router.post('/label/:labelId/delete', isAuthenticated, async (req, res) => {
     }
 
     await moveout.deleteLabel(labelId);
-    console.log('Label and all associated files deleted.');
+
 
     res.redirect("/home");
 });
 
 router.post('/label/:labelId/delete-file', isAuthenticated, async (req, res) => {
 
-    console.log('Delete file route hit');
     const labelId = req.params.labelId;
     const email = req.session.email;
     const { filePath, contentType } = req.body;
 
-    console.log('Request body:', req.body);
-    console.log('Label ID:', labelId);
-    console.log('Email:', email);
 
     const existingLabel = await moveout.getSpecificLabelByUser(labelId, email);
-    console.log('Existing label:', existingLabel);
 
     if (!existingLabel) {
         return res.status(404).send('Label not found.');
@@ -678,11 +670,9 @@ router.post('/label/:labelId/delete-file', isAuthenticated, async (req, res) => 
     const imagePathsJson = imagePaths.length > 0 ? JSON.stringify(imagePaths) : null;
     const audioPathsJson = audioPaths.length > 0 ? JSON.stringify(audioPaths) : null;
 
-
     await moveout.updateLabelFilePaths(labelId, imagePathsJson, audioPathsJson);
 
-    console.log('File deleted from label and database updated.');
-    console.log('Redirecting to edit label page...');
+  
     res.redirect(`/label/${labelId}/edit`);
 
 });
@@ -710,7 +700,7 @@ router.post('/share-label', isAuthenticated, async (req, res) => {
         }
 
         const [rows] = await moveout.getLabelIdByName(labelName, senderEmail);
-        console.log('Rows returned by getLabelIdByName:', rows);
+       
         if (!rows || rows.length === 0) {
             return res.render('pages/share-labels.ejs', {
                 title: 'Share Label',
@@ -755,10 +745,8 @@ router.get('/inbox', isAuthenticated, async (req, res) => {
 
 router.post('/discard-label', isAuthenticated, async (req, res) => {
     try {
-        console.log("Request body:", req.body);
         const sharedId = req.body.shared_id;
-        console.log("Received shared ID:", sharedId);
-        
+ 
         if (!sharedId) {
             throw new Error('Shared ID not found in the request.');
         }
@@ -784,7 +772,7 @@ router.post('/accept-label', isAuthenticated, async (req, res) => {
         const newLabelId = result.newLabelId;
         const newLabelName = result.newLabelName;
         const backgroundImagePath = result.backgroundImagePath;
-        console.log("backgroundimageoath :", backgroundImagePath);
+        
 
         const qrContent = `https://575e-2001-6b0-2a-c280-bdc1-f512-44f2-213.ngrok-free.app/label/${newLabelId}?email=${encodeURIComponent(recipientEmail)}`;
         const qrImagePath = await qrFunctions.overlayQRCodeOnImage(qrContent, backgroundImagePath, recipientEmail, newLabelId, newLabelName);
@@ -817,7 +805,6 @@ router.get('/get-label', isAuthenticated, async (req, res) => {
     if (labelIdResult && labelIdResult.length > 0) {
         const labelId = labelIdResult[0].label_id;
         const labelImagePath = `/labels/${email}/qr_code_${labelId}.png`;
-        console.log("labelImagePath : ", labelImagePath);
         res.json({ success: true, label: { name: labelName, imagePath: labelImagePath } });
     } else {
         res.json({ success: false, message: 'Label not found' });
@@ -917,7 +904,6 @@ router.post('/admin/send-email', isAuthenticated, isAdmin, async (req, res) => {
 
     await emailFunctions.adminSendMailToUsers(subject, message);
 
-    console.log('Emails sent successfully');
     res.redirect('/admin-page');
 
 });

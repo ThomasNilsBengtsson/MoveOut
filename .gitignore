@@ -135,5 +135,4 @@ dist
 
 # Database configuration
 config/db/eshop.json
-config/db/moveout.js
 certs/ca-certificate.crt

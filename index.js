@@ -10,7 +10,7 @@ const session = require('express-session');
 require('./inactiveUsers/inactiveUsers.js');
 require('./admin/admin.js');
 
-// Log message for starting the server
+
 console.log('Attempting to start the server...');
 
 app.use(express.static("public"));

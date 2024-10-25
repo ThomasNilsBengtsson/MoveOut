@@ -98,7 +98,6 @@ async function isAdmin(email) {
     let sql = `CALL get_admin_status(?)`;
     const [rows] = await db.query(sql, [email]);
     await db.end();
-    console.log("isAdmin : ", rows);
    if (rows && rows[0] && rows[0].length > 0) {
     return rows[0][0].is_admin === 1;
 }
