@@ -1,5 +1,86 @@
 <%- include("./../partials/header.ejs", { showNavbar: false }) %>
 
+<style>
+  body {
+  font-family: Arial, sans-serif;
+  background-color: #f0f2f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  margin: 0;
+}
+
+#main-holder {
+  background-color: #ffffff;
+  padding: 40px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: 350px;
+  text-align: center;
+}
+
+#login-header {
+  font-size: 24px;
+  color: #333333;
+  margin-bottom: 20px;
+}
+
+#login-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.login-form-field {
+  padding: 10px;
+  margin-bottom: 15px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 16px;
+}
+
+#login-form-submit {
+  padding: 10px;
+  background-color: #28a745;
+  color: #ffffff;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+#login-form-submit:hover {
+  background-color: #218838;
+}
+
+.error-message {
+  margin-bottom: 15px;
+  font-size: 14px;
+}
+
+a {
+  text-decoration: none;
+  color: #1877f2;
+  margin-top: 10px;
+  font-size: 14px;
+  transition: color 0.3s;
+}
+
+a:hover {
+  color: #145db2;
+}
+
+a:first-of-type {
+  color: #555;
+  margin-bottom: 5px;
+  cursor: default;
+  pointer-events: none;
+}
+
+</style>
+
+
   <main id="main-holder">
     <h1 id="login-header">Register</h1>
 

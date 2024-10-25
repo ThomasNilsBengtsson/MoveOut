@@ -15,8 +15,6 @@ const fs = require('fs');
 const { glob } = require('glob'); 
 const crypto = require('crypto');
 const { title } = require("process");
-/* const { auth } = require('express-openid-connect');
-const authConfig = require('../authConfig'); */
 const isAuthenticated = authFunctions.isAuthenticated;
 const isAdmin = authFunctions.isAdmin;
 
@@ -132,8 +130,6 @@ router.post("/register", async (req, res) => {
 });
 
 
-
-
 router.get("/email-verified", async (req, res) => {
     let data = {};
     data.title = "Verified";
@@ -242,91 +238,6 @@ router.get("/create-label", isAuthenticated, (req, res) => {
     res.render("pages/create-label.ejs", data);
 });
 
-/* router.post('/create-label', isAuthenticated, upload.fields([
-    { name: 'imageContent', maxCount: 1 },
-    { name: 'audioContent', maxCount: 1 }
-]), async (req, res) => {
-
-    let data = {
-        title: "Create label",
-        email: req.session.email
-    };
-   
-    const email = req.session.email;
-    const contentType = req.body.contentType; 
-    const userDirectory = `public/labels/${email}`;
-    const isLabelPrivate = req.body.isLabelPrivate === "on";
-    const labelName = req.body.labelName;
-
-    let textContent = null;
-    let userImagePath = null;
-    let userAudioPath = null;
-
-
-    let imagePaths = [];
-    let audioPaths = [];
-    let newFiles = [];
-
-
-
-
-    if (contentType === "text") {
-        textContent = req.body.textContent;
-    } else if (contentType === "image" && req.files.imageContent) {
-        const imagePath = `/uploads/images/${email}/` + req.files.imageContent[0].filename;
-        userImagePath = JSON.stringify([imagePath]);
-        imagePaths.push(imagePath);
-        newFiles = newFiles.concat(req.files.imageContent); 
-    } else if (contentType === "audio" && req.files.audioContent) {
-        const audioPath = `/uploads/audio/${email}/` + req.files.audioContent[0].filename;
-        userAudioPath = JSON.stringify([audioPath]);
-        audioPaths.push(audioPath);
-        newFiles = newFiles.concat(req.files.audioContent); 
-    }
-
-
-    const { exceedsLimit, message} = await maxStorageContent.checkStorageLimit(imagePaths, audioPaths, newFiles);
-
-
-    if (exceedsLimit) {
-        console.log("storage is reached");
-        return res.status(413).send(message); 
-    }
-
-
-
-    const labelExists = await moveout.check_if_label_name_exists(email, labelName);
-    if (labelExists) {
-        return res.status(400).send("Label name must be unique. This label name already exists.");
-    }
-
-    const labelId = await moveout.insert_info_qr_code(email, labelName, textContent, userImagePath, userAudioPath, isLabelPrivate);
-
-    let backgroundImagePath = null;
-    const selectedLabelDesign = req.body.labelDesign;
-
-    if (selectedLabelDesign === 'label1') {
-        backgroundImagePath = 'public/background-images/label-image-flammable.png';
-    } else if (selectedLabelDesign === 'label2') {
-        backgroundImagePath = 'public/background-images/label-image-heavy.png';
-    } else if (selectedLabelDesign === 'label3') {
-        backgroundImagePath = 'public/background-images/label-image-fragile.png';
-    }
-
-
-
-    await moveout.updateBackgroundImage(labelId, email, backgroundImagePath);
-
-    const qrContent = `https://575e-2001-6b0-2a-c280-bdc1-f512-44f2-213.ngrok-free.app/label/${labelId}?email=${encodeURIComponent(email)}`; 
-    const qrImagePath = await qrFunctions.overlayQRCodeOnImage(qrContent, backgroundImagePath, email, labelId, labelName);
-    const publicImagePath = '/' + path.relative('public', qrImagePath).replace(/\\/g, '/');
-
-    data.imageUrl = publicImagePath;
-
-    res.redirect("/home");
-
-}); */
-
 router.post('/create-label', isAuthenticated, upload.fields([
     { name: 'imageContent', maxCount: 1 },
     { name: 'audioContent', maxCount: 1 }
@@ -351,50 +262,39 @@ router.post('/create-label', isAuthenticated, upload.fields([
     let audioPaths = [];
     let newFiles = [];
 
-    // Set text content if the type is text
     if (contentType === "text") {
         textContent = req.body.textContent;
     } 
-    // Handle image content
     else if (contentType === "image" && req.files.imageContent) {
         const imagePath = `/uploads/images/${email}/` + req.files.imageContent[0].filename;
         imagePaths.push(imagePath);
         newFiles = newFiles.concat(req.files.imageContent); 
     } 
-    // Handle audio content
     else if (contentType === "audio" && req.files.audioContent) {
         const audioPath = `/uploads/audio/${email}/` + req.files.audioContent[0].filename;
         audioPaths.push(audioPath);
         newFiles = newFiles.concat(req.files.audioContent); 
     }
 
-    // Ensure paths are flattened before saving
     imagePaths = Array.isArray(imagePaths) ? imagePaths.flat() : imagePaths;
     audioPaths = Array.isArray(audioPaths) ? audioPaths.flat() : audioPaths;
 
-    // Convert paths to JSON strings
     userImagePath = JSON.stringify(imagePaths);
     userAudioPath = JSON.stringify(audioPaths);
 
-    
-
-    // Check storage limit
     const { exceedsLimit, message } = await maxStorageContent.checkStorageLimit(imagePaths, audioPaths, newFiles);
     if (exceedsLimit) {
         console.log("Storage limit reached");
         return res.status(413).send(message); 
     }
 
-    // Check if the label name already exists
     const labelExists = await moveout.check_if_label_name_exists(email, labelName);
     if (labelExists) {
         return res.status(400).send("Label name must be unique. This label name already exists.");
     }
 
-    // Insert the label details into the database
     const labelId = await moveout.insert_info_qr_code(email, labelName, textContent, userImagePath, userAudioPath, isLabelPrivate);
 
-    // Handle background image selection
     let backgroundImagePath = null;
     const selectedLabelDesign = req.body.labelDesign;
     if (selectedLabelDesign === 'label1') {
@@ -407,7 +307,6 @@ router.post('/create-label', isAuthenticated, upload.fields([
     
     await moveout.updateBackgroundImage(labelId, email, backgroundImagePath);
 
-    // Create QR code with the updated label
     const qrContent = `https://575e-2001-6b0-2a-c280-bdc1-f512-44f2-213.ngrok-free.app/label/${labelId}?email=${encodeURIComponent(email)}`; 
     const qrImagePath = await qrFunctions.overlayQRCodeOnImage(qrContent, backgroundImagePath, email, labelId, labelName);
     const publicImagePath = '/' + path.relative('public', qrImagePath).replace(/\\/g, '/');
@@ -416,8 +315,6 @@ router.post('/create-label', isAuthenticated, upload.fields([
 
     res.redirect("/home");
 });
-
-
 
 router.get("/label/:labelId", async (req, res) => {
     const labelId = req.params.labelId;
@@ -478,7 +375,6 @@ router.get("/label/:labelId", async (req, res) => {
   
 });
 
-
 router.get("/verification-code-label", async (req, res) => {
     const labelId = req.query.labelId;
     const email = req.query.email;
@@ -536,182 +432,6 @@ router.get('/label/:labelId/edit', isAuthenticated, async (req, res) => {
         res.status(500).send('An error occurred while fetching the label.');
     }
 });
-
-
-/* router.post('/label/:labelId/edit', isAuthenticated, upload.fields([
-    { name: 'imageContent', maxCount: 1 },
-    { name: 'audioContent', maxCount: 1 }
-]), async (req, res) => {
-    try {
-        const labelId = req.params.labelId;
-        const email = req.session.email;
- 
-        const existingLabel = await moveout.getSpecificLabelByUser(labelId, email);
-
-        if (!existingLabel) {
-            return res.status(404).send('Label not found.');
-        }
-        
-        const isLabelPrivate = req.body.isLabelPrivate === 'on';
-        let textContent = req.body.textContent !== undefined 
-        ? req.body.textContent.trim() 
-        : existingLabel.text_content;
-     
-
-        
-
-    let imagePaths = [];
-    let audioPaths = [];
-    let newFiles = [];
-
-    
-
-    if (existingLabel.image_path && existingLabel.image_path !== 'null') {
-        try {
-            imagePaths = JSON.parse(existingLabel.image_path);
-        } catch (error) {
-            imagePaths = [existingLabel.image_path];
-        }
-    }
-
-    if (existingLabel.audio_path && existingLabel.audio_path !== 'null') {
-        try {
-            audioPaths = JSON.parse(existingLabel.audio_path);
-        } catch (error) {
-            audioPaths = [existingLabel.audio_path];
-        }
-    }
-
-    if (req.files.imageContent) {
-        const newImagePaths = req.files.imageContent.map(file => `/uploads/images/${email}/${file.filename}`);
-        imagePaths = imagePaths.concat(newImagePaths);
-        newFiles = newFiles.concat(req.files.imageContent);
-    }
-
-    if (req.files.audioContent) {
-        const newAudioPaths = req.files.audioContent.map(file => `/uploads/audio/${email}/${file.filename}`);
-        audioPaths = audioPaths.concat(newAudioPaths);
-        newFiles = newFiles.concat(req.files.audioContent); 
-    }
-
-    const { exceedsLimit, storageMessage } = await maxStorageContent.checkStorageLimit(imagePaths, audioPaths, newFiles);
-    if (exceedsLimit) {
-        console.log("Storage limit reached. Returning 413 response with message:", storageMessage);
-        return res.status(413).send(storageMessage); 
-    }
-
-
-    const imagePathsJson = imagePaths.length > 0 ? JSON.stringify(imagePaths) : null;
-    const audioPathsJson = audioPaths.length > 0 ? JSON.stringify(audioPaths) : null;
-
-
-        await moveout.updateLabel(labelId, {
-            text_content: textContent,
-            image_path: imagePathsJson,
-            audio_path: audioPathsJson,
-            is_label_private: isLabelPrivate
-        });
-
-        res.redirect('/home');
-    } catch (error) {
-        console.error('Error updating label:', error);
-        res.status(500).send('An error occurred while updating the label.');
-    }
-});
- */
-
-/* router.post('/label/:labelId/edit', isAuthenticated, upload.fields([
-    { name: 'imageContent', maxCount: 1 },
-    { name: 'audioContent', maxCount: 1 }
-]), async (req, res) => {
-    try {
-        const labelId = req.params.labelId;
-        const email = req.session.email;
-
-        const existingLabel = await moveout.getSpecificLabelByUser(labelId, email);
-
-        if (!existingLabel) {
-            return res.status(404).send('Label not found.');
-        }
-
-        const isLabelPrivate = req.body.isLabelPrivate === 'on';
-        let textContent = req.body.textContent !== undefined 
-            ? req.body.textContent.trim() 
-            : existingLabel.text_content;
-
-        let imagePaths = [];
-        let audioPaths = [];
-        let newFiles = [];
-
-        // Parse existing image paths
-        if (existingLabel.image_path && existingLabel.image_path !== 'null') {
-            try {
-                let parsedPaths = JSON.parse(existingLabel.image_path);
-                // Flatten if nested array is found
-                imagePaths = Array.isArray(parsedPaths) && Array.isArray(parsedPaths[0])
-                    ? parsedPaths.flat()
-                    : parsedPaths;
-            } catch (error) {
-                imagePaths = [existingLabel.image_path];
-            }
-        }
-
-        // Parse existing audio paths
-        if (existingLabel.audio_path && existingLabel.audio_path !== 'null') {
-            try {
-                let parsedPaths = JSON.parse(existingLabel.audio_path);
-                // Flatten if nested array is found
-                audioPaths = Array.isArray(parsedPaths) && Array.isArray(parsedPaths[0])
-                    ? parsedPaths.flat()
-                    : parsedPaths;
-            } catch (error) {
-                audioPaths = [existingLabel.audio_path];
-            }
-        }
-
-        // Handle new image content
-        if (req.files.imageContent) {
-            const newImagePaths = req.files.imageContent.map(file => `/uploads/images/${email}/${file.filename}`);
-            imagePaths = imagePaths.concat(newImagePaths);
-            newFiles = newFiles.concat(req.files.imageContent);
-        }
-
-        // Handle new audio content
-        if (req.files.audioContent) {
-            const newAudioPaths = req.files.audioContent.map(file => `/uploads/audio/${email}/${file.filename}`);
-            audioPaths = audioPaths.concat(newAudioPaths);
-            newFiles = newFiles.concat(req.files.audioContent);
-        }
-
-        // Ensure paths are flattened before saving
-        imagePaths = Array.isArray(imagePaths) ? imagePaths.flat() : imagePaths;
-        audioPaths = Array.isArray(audioPaths) ? audioPaths.flat() : audioPaths;
-
-        // Convert paths to JSON strings
-        const imagePathsJson = imagePaths.length > 0 ? JSON.stringify(imagePaths) : null;
-        const audioPathsJson = audioPaths.length > 0 ? JSON.stringify(audioPaths) : null;
-
-        // Check storage limit
-        const { exceedsLimit, storageMessage } = await maxStorageContent.checkStorageLimit(imagePaths, audioPaths, newFiles);
-        if (exceedsLimit) {
-            console.log("Storage limit reached. Returning 413 response with message:", storageMessage);
-            return res.status(413).send(storageMessage); 
-        }
-
-        // Update label in the database
-        await moveout.updateLabel(labelId, {
-            text_content: textContent,
-            image_path: imagePathsJson,
-            audio_path: audioPathsJson,
-            is_label_private: isLabelPrivate
-        });
-
-        res.redirect('/home');
-    } catch (error) {
-        console.error('Error updating label:', error);
-        res.status(500).send('An error occurred while updating the label.');
-    }
-}); */
 
 router.post('/label/:labelId/edit', isAuthenticated, upload.fields([
     { name: 'imageContent', maxCount: 1 },
