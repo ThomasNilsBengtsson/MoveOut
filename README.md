@@ -11,7 +11,7 @@ This project focused on developing an application that can help people when they
 
 ## Prerequisites
 
-Node.js: Download from nodejs.org
+Node.js: Download from [Node.js](https://nodejs.org)
 
 MySQL: This project uses a MySQL database hosted on DigitalOcean.
 
@@ -22,9 +22,9 @@ To securely connect to the DigitalOcean database, a CA certificate file is requi
 
 This project uses Ngrok to securely expose the local server to the internet. Ngrok is particularly helpful for testing features that require external access, such as scanning the QR code on a label with a mobile device to render its contents.
 
-Install Ngrok: Download and install Ngrok from ngrok.com.
+Install Ngrok: Download and install Ngrok from [Ngrok](https://ngrok.com).
 
-Start Ngrok: Run the following command to create a tunnel for your application (assuming it runs on port 3000): ngrok http 3000
+Start Ngrok: Run the following command to create a tunnel for your application: ngrok http 3000
 
 Update URLs: Once Ngrok is running, it will provide a forwarding link (e.g., https://example.ngrok-free.app).
 
@@ -58,7 +58,7 @@ DB_PORT=your_database_port
 
 In the path config/db/moveout.js the connection the database on DigitalOcean is setup.
 
-The variables for in the .env file are related to the email that will be used to send emails with nodemailer. Go to nodemailer documentation to find more information if needed to understand how it works.
+The variables for email in the .env file are related to the email that will be used to send emails with nodemailer. Go to nodemailer documentation to find more information if needed to understand how it works.
 
 ### Install Dependencies
 
