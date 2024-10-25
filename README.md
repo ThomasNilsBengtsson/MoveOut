@@ -1,45 +1,5 @@
 # MoveOut
 
-# How to Use
-
-# Prerequisites
-
-Node.js: Download from nodejs.org
-This project uses a MySQL database hosted on DigitalOcean
-Database CA Certificate
-To securely connect to the DigitalOcean database, a CA certificate file is required. Make sure the certificate file is located in the designated folder in your project.
-
-This project uses Ngrok to expose the local server to the internet securely. Ngrok is particularly useful for testing features that requires remote access to the application from a mobile device.In this project that would be scanning the QR-code on a label and rendering its content a phone
-
-Install Ngrok: Download and install Ngrok from ngrok.com.
-Start Ngrok: Use the following command to create a tunnel for your application "ngrok http 3000"
-You will then find a forwarding link such " https://example.ngrok-free.app". Replace the orignal forwarding links the code to the one you receive. You can do a project search for "ngrok" and you will find the lines that need replacing
-
-Setup an .env file in the root directory
-
-# Email configuration
-
-EMAIL_USER=your_email_address
-EMAIL_PASS=your_email_password
-
-# Application base URL
-
-BASE_URL=your_base_url
-
-# Database configuration
-
-DB_HOST=your_database_host
-DB_USER=your_database_user
-DB_PASSWORD=your_database_password
-DB_DATABASE=your_database_name
-DB_PORT=your_database_port
-
-After creating the .env file run the follwoing command in the project directory: npm install
-
-# Run
-
-To start the server run "node index.js" in terminal (run from the root directory).
-
 How to Use
 Prerequisites
 Node.js: Download from nodejs.org
