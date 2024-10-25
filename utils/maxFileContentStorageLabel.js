@@ -5,7 +5,6 @@ const MAX_LABEL_STORAGE = 10 * 1024 * 1024;
 
 async function checkStorageLimit(existingImagePaths = [], existingAudioPaths = [], newFiles = []) {
     let totalSize = 0;
-
  
     for (const imagePath of existingImagePaths) {
         if (typeof imagePath === 'string') {
@@ -21,7 +20,6 @@ async function checkStorageLimit(existingImagePaths = [], existingAudioPaths = [
         }
     }
 
-
     for (const audioPath of existingAudioPaths) {
         if (typeof audioPath === 'string') {
             const fullPath = path.join(__dirname, '..', 'public', audioPath);
@@ -36,21 +34,17 @@ async function checkStorageLimit(existingImagePaths = [], existingAudioPaths = [
         }
     }
 
-
     for (const file of newFiles) {
         totalSize += file.size;
     }
 
-    console.log("Total size calculated:", totalSize);
     if (totalSize > MAX_LABEL_STORAGE) {
-        console.log("Storage limit exceeded, returning exceedsLimit: true with message.");
         return {
             exceedsLimit: true,
             message: `The total storage for this label exceeds the maximum allowed storage of ${(MAX_LABEL_STORAGE / 1024).toFixed(2)} KB.`
         };
     }
     
-
     return { exceedsLimit: false };
 }
 

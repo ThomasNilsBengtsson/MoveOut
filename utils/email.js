@@ -25,8 +25,6 @@ async function sendVerificationEmail(userEmail, verificationLink) {
   await transporter.sendMail(mailOptions);
 }
 
-
-
 async function accountCreationConfirmation(userEmail) {
   const transporter = nodemailer.createTransport({
     service: "Gmail", 
@@ -46,8 +44,6 @@ async function accountCreationConfirmation(userEmail) {
 
   await transporter.sendMail(mailOptions);
 }
-
-
 
 async function sendVerificationCodeLabel(userEmail, verificationCode) {
   const transporter = nodemailer.createTransport({
@@ -111,8 +107,6 @@ async function accountDeactivationReminder(userEmail) {
 
   await transporter.sendMail(mailOptions);
 }
-
-
 
 async function adminSendMailToUsers(subject, message) {
  

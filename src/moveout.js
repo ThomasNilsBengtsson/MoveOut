@@ -93,23 +93,18 @@ async function userLogIn(email, userPassword)
     }
 }
 
-
 async function isAdmin(email) {
     const db = await mysql.createConnection(config);
     let sql = `CALL get_admin_status(?)`;
     const [rows] = await db.query(sql, [email]);
     await db.end();
     console.log("isAdmin : ", rows);
-   // Ensure that rows[0] exists before accessing it
    if (rows && rows[0] && rows[0].length > 0) {
     return rows[0][0].is_admin === 1;
 }
-return false; // Return false if no matching email is found
+return false; 
     return false;
 }
-
-
-
 
 async function isEmailVerified(email)
 {
@@ -139,8 +134,6 @@ async function isEmailVerified(email)
         if (db && db.end) await db.end();
     }
 }
-
-
 
 async function isEmailReg(registerEmail) {
     const errors = {};
@@ -179,10 +172,6 @@ async function check_if_label_name_exists(email, labelName) {
     }
 }
 
-
-
-
-
 async function insert_info_qr_code(email, labelName, textContent, imagePath, audioPath, isLabelPrivate) {
     const db = await mysql.createConnection(config);
     const sql = `CALL insert_to_qr_code(?, ?, ?, ?, ?, ?)`;
@@ -203,7 +192,6 @@ async function getLabelIdByName(labelName, email) {
     return rows[0];
 }
 
-
 async function get_label_by_id(labelId) {
     const db = await mysql.createConnection(config);
     const sql = `SELECT * FROM qr_code_labels WHERE label_id = ?`;
@@ -215,7 +203,6 @@ async function get_label_by_id(labelId) {
     return rows[0];
 }
 
-
 async function insert_verification_code_label(labelId, verificationCode)
 {
     const db = await mysql.createConnection(config);
@@ -223,8 +210,6 @@ async function insert_verification_code_label(labelId, verificationCode)
     await db.query(sql,[labelId, verificationCode]);
     await db.end();
 }
-
-
 
 async function is_user_label_code_verified(labelId, verificationCode) {
     const db = await mysql.createConnection(config);
@@ -240,7 +225,6 @@ async function is_user_label_code_verified(labelId, verificationCode) {
         return false;
     }
 }
-
 
 async function markLabelAsVerified(labelId) {
     const db = await mysql.createConnection(config);
@@ -264,7 +248,6 @@ async function getSpecificLabelByUser(labelId, email) {
     return rows[0][0];
 }
 
-
 async function getLabelsByUser(email) {
     const db = await mysql.createConnection(config);
     const sql = `CALL get_labels_by_user(?)`;
@@ -276,8 +259,7 @@ async function getLabelsByUser(email) {
 async function deleteLabel(labelId) {
     const db = await mysql.createConnection(config);
     const sql = `CALL delete_label(?)`;
-    
-   
+       
     const [rows] = await db.query(sql, [labelId]);
     await db.end();
     
@@ -287,8 +269,6 @@ async function deleteLabel(labelId) {
         return 'No message returned from procedure.';
     }
 }
-
-
 
 async function updateLabel(labelId, { text_content, image_path, audio_path, is_label_private }) {
     const db = await mysql.createConnection(config);
@@ -319,7 +299,6 @@ async function getSharedLabels(recipientEmail) {
     return rows[0]; 
 }
 
-
 async function deleteSharedLabel(sharedId) {
     const db = await mysql.createConnection(config);
     try {
@@ -329,10 +308,8 @@ async function deleteSharedLabel(sharedId) {
     }
 }
 
-
 async function acceptSharedLabel(sharedId, recipientEmail) {
     const db = await mysql.createConnection(config);
-
     try {
        
         const [rows] = await db.query('CALL get_shared_label_details(?)', [sharedId]);
@@ -350,7 +327,6 @@ async function acceptSharedLabel(sharedId, recipientEmail) {
                 try {
                     let parsedPaths = JSON.parse(sharedLabel.image_path);
         
-                    // Flatten if nested array is found
                     if (Array.isArray(parsedPaths) && Array.isArray(parsedPaths[0])) {
                         parsedPaths = parsedPaths.flat();
                     }
@@ -370,17 +346,14 @@ async function acceptSharedLabel(sharedId, recipientEmail) {
                 console.error('Unexpected format for image path:', sharedLabel.image_path);
             }
         }
-
         if (sharedLabel.audio_path) {
             if (typeof sharedLabel.audio_path === 'string') {
                 try {
                     let parsedPaths = JSON.parse(sharedLabel.audio_path);
         
-                    // Flatten if nested array is found
                     if (Array.isArray(parsedPaths) && Array.isArray(parsedPaths[0])) {
                         parsedPaths = parsedPaths.flat();
                     }
-        
                     audioPaths = parsedPaths;
                 } catch (e) {
                     console.error('Error parsing audio path:', e);
@@ -396,56 +369,7 @@ async function acceptSharedLabel(sharedId, recipientEmail) {
                 console.error('Unexpected format for audio path:', sharedLabel.audio_path);
             }
         }
-     /*    if (sharedLabel.image_path) {
-            if (typeof sharedLabel.image_path === 'string') {
-                try {
-                    // Attempt to parse the image_path, accounting for potential nested arrays
-                    let parsedPaths = JSON.parse(sharedLabel.image_path);
-
-                    // If parsedPaths is an array and the first element is also an array, flatten it
-                    if (Array.isArray(parsedPaths) && Array.isArray(parsedPaths[0])) {
-                        parsedPaths = parsedPaths.flat();
-                    }
-
-                    imagePaths = parsedPaths;
-                    console.log('Parsed image paths:', imagePaths);
-                } catch (e) {
-                    console.error('Error parsing image path:', e);
-                    if (sharedLabel.image_path.startsWith('/')) {
-                        imagePaths = [sharedLabel.image_path];
-                    } else {
-                        console.error('Invalid image path format:', sharedLabel.image_path);
-                    }
-                }
-            } else if (Array.isArray(sharedLabel.image_path)) {
-                imagePaths = sharedLabel.image_path;
-                console.log('Image paths already an array:', imagePaths);
-            } else {
-                console.error('Unexpected format for image path:', sharedLabel.image_path);
-            }
-        }
-
-        // Handle audio paths similarly
-        if (sharedLabel.audio_path) {
-            if (typeof sharedLabel.audio_path === 'string') {
-                try {
-                    audioPaths = JSON.parse(sharedLabel.audio_path);
-                } catch (e) {
-                    console.error('Error parsing audio path:', e);
-                    if (sharedLabel.audio_path.startsWith('/')) {
-                        audioPaths = [sharedLabel.audio_path];
-                    } else {
-                        console.error('Invalid audio path format:', sharedLabel.audio_path);
-                    }
-                }
-            } else if (Array.isArray(sharedLabel.audio_path)) {
-                audioPaths = sharedLabel.audio_path;
-            } else {
-                console.error('Unexpected format for audio path:', sharedLabel.audio_path);
-            }
-        } */
-
-
+     
         const baseDir = path.resolve(__dirname, '../public');
         const recipientImageDir = path.join(baseDir, 'uploads', 'images', recipientEmail);
         const recipientAudioDir = path.join(baseDir, 'uploads', 'audio', recipientEmail);
@@ -472,7 +396,6 @@ async function acceptSharedLabel(sharedId, recipientEmail) {
             }
         }
 
-        // Copy audio files to the recipient's folder
         for (const audioPath of audioPaths) {
             if (typeof audioPath === 'string') {
                 const oldAudioPath = path.join(baseDir, audioPath);
@@ -483,10 +406,7 @@ async function acceptSharedLabel(sharedId, recipientEmail) {
                 newAudioPaths.push('/' + newAudioPath);
             }
         }
-        console.log('New image paths:', newImagePaths);
-        console.log('New audio paths:', newAudioPaths); 
 
-        //ta bort ifall måste
         if (Array.isArray(newImagePaths) && Array.isArray(newImagePaths[0])) {
             newImagePaths = newImagePaths.flat();
         }
@@ -494,12 +414,9 @@ async function acceptSharedLabel(sharedId, recipientEmail) {
             newAudioPaths = newAudioPaths.flat();
         }
         
-        // Ensure the new paths are consistently stored as stringified JSON arrays
         const imagePathsJson = JSON.stringify(newImagePaths).replace(/\\/g, '');
         const audioPathsJson = JSON.stringify(newAudioPaths).replace(/\\/g, '');
         
-        console.log('Final newImagePaths before saving:', imagePathsJson);
-
         const[result] = await db.query('CALL accept_shared_label(?, ?, ?, ?, ?, ?, ?)', [
             recipientEmail,
             sharedLabel.label_name,
@@ -527,17 +444,13 @@ async function acceptSharedLabel(sharedId, recipientEmail) {
     }
 }
 
-
-
 async function doesEmailExist(email) {
     let db;
     try {
         db = await mysql.createConnection(config);
 
         const [rows] = await db.query('CALL check_email_exists(?, @exists)', [email]);
-
         const [result] = await db.query('SELECT @exists AS email_exists');
-
         return result.length > 0 && result[0].email_exists === 1;
 
     } catch (error) {
@@ -547,7 +460,6 @@ async function doesEmailExist(email) {
         if (db && db.end) await db.end();
     }
 }
-
 
 async function deactivateAccount(email)
 {
@@ -563,7 +475,6 @@ async function deactivateAccount(email)
     await db.end();
 }
 
-
 async function accountDeactivationStatus(email)
 {
     const db = await mysql.createConnection(config);
@@ -574,7 +485,6 @@ async function accountDeactivationStatus(email)
  
 }
 
-
 async function deleteAccount(email)
 {
     const db = await mysql.createConnection(config);
@@ -582,7 +492,6 @@ async function deleteAccount(email)
     await db.query(sql, [email]);
 
     const baseDir = path.resolve(__dirname, '../public');
-
 
     const userImageDir = path.join(baseDir, 'uploads/images', email);
     const userAudioDir = path.join(baseDir, 'uploads/audio', email);
@@ -606,9 +515,6 @@ async function deleteAccount(email)
     deleteDirectory(userLabelsDir);
 }
 
-
-
-
 async function insertDeleteToken(email, deleteToken, deleteTokenExpires)
 {
     const db = await mysql.createConnection(config);
@@ -616,8 +522,6 @@ async function insertDeleteToken(email, deleteToken, deleteTokenExpires)
     await db.query(sql, [email, deleteToken, deleteTokenExpires]);
     await db.end();
 }
-
-
 
 async function verifyDeleteToken(token) {
     const db = await mysql.createConnection(config);
@@ -634,7 +538,6 @@ async function verifyDeleteToken(token) {
 
 }
 
-
 async function updateLastLogin(email) {
     const db = await mysql.createConnection(config);
     const sql = `CALL update_last_login(?)`;
@@ -642,14 +545,11 @@ async function updateLastLogin(email) {
     await db.end();
 }
 
-
-
 async function getInactiveUsers() {
     const db = await mysql.createConnection(config);
     const [rows] = await db.query('CALL get_inactive_users()');
     return rows[0];  
 }
-
 
 async function getAllUsers()
 {
@@ -659,7 +559,6 @@ async function getAllUsers()
     return rows[0];
 }
 
-
 async function getNonAdminUsers() {
     const db = await mysql.createConnection(config);
     const sql = 'CALL get_non_admin_users()';
@@ -667,9 +566,6 @@ async function getNonAdminUsers() {
     await db.end();
     return rows[0];
 }
-
-
-
 
 async function accountActivationToggle(email, isActive) {
     
@@ -685,7 +581,6 @@ async function accountActivationToggle(email, isActive) {
 
 }
 
-
 async function getUsersWithStorageData() {
     const db = await mysql.createConnection(config);
     const sql = 'CALL get_non_admin_users()';
@@ -698,8 +593,6 @@ async function getUsersWithStorageData() {
 
     return users[0];
 }
-
-
 
 async function updateBackgroundImage(labelId, email, backgroundImagePath) {
     const db = await mysql.createConnection(config);
@@ -726,7 +619,6 @@ async function getBackgroundImage(labelId, email) {
 
 }
 
-
 async function updateLabelFilePaths(labelId, image_path, audio_path) {
     const db = await mysql.createConnection(config);
     const sql = `CALL update_label_file_paths(?, ?, ?)`;
@@ -734,7 +626,6 @@ async function updateLabelFilePaths(labelId, image_path, audio_path) {
     await db.end();
     return result;
 }
-
 
 module.exports = {
     "registerUser": registerUser,

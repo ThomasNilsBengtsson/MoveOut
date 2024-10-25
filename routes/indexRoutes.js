@@ -456,12 +456,11 @@ router.post('/label/:labelId/edit', isAuthenticated, upload.fields([
         let audioPaths = [];
         let newFiles = [];
 
-        // Parse and flatten existing image paths if needed
         if (existingLabel.image_path && existingLabel.image_path !== 'null') {
             try {
                 let parsedPaths = JSON.parse(existingLabel.image_path);
                 imagePaths = Array.isArray(parsedPaths) ? parsedPaths.flat() : [parsedPaths];
-                imagePaths = imagePaths.flat(); // Additional flattening to ensure no nested arrays remain
+                imagePaths = imagePaths.flat(); 
             } catch (error) {
                 imagePaths = [existingLabel.image_path];
             }
@@ -471,14 +470,12 @@ router.post('/label/:labelId/edit', isAuthenticated, upload.fields([
             try {
                 let parsedPaths = JSON.parse(existingLabel.audio_path);
                 audioPaths = Array.isArray(parsedPaths) ? parsedPaths.flat() : [parsedPaths];
-                audioPaths = audioPaths.flat(); // Additional flattening to ensure no nested arrays remain
+                audioPaths = audioPaths.flat(); 
             } catch (error) {
                 audioPaths = [existingLabel.audio_path];
             }
         }
         
-
-        // Add new files if uploaded
         if (req.files.imageContent) {
             const newImagePaths = req.files.imageContent.map(file => `/uploads/images/${email}/${file.filename}`);
             imagePaths = imagePaths.concat(newImagePaths);
@@ -491,27 +488,22 @@ router.post('/label/:labelId/edit', isAuthenticated, upload.fields([
             newFiles = newFiles.concat(req.files.audioContent);
         }
 
-
         imagePaths = Array.isArray(imagePaths) ? imagePaths.flat() : imagePaths;
         audioPaths = Array.isArray(audioPaths) ? audioPaths.flat() : audioPaths;
 
         const imagePathsJson = JSON.stringify(imagePaths);
         const audioPathsJson = JSON.stringify(audioPaths);
 
-
-        // Check storage limit
         const { exceedsLimit, storageMessage } = await maxStorageContent.checkStorageLimit(imagePaths, audioPaths, newFiles);
         if (exceedsLimit) {
             console.log("Storage limit reached. Returning 413 response with message:", storageMessage);
             return res.status(413).send(storageMessage);
         }
   
-
-        // Update label, passing arrays directly (as JSON)
         await moveout.updateLabel(labelId, {
             text_content: textContent,
-            image_path: imagePathsJson, // Pass as JSON array
-            audio_path: audioPathsJson, // Pass as JSON array
+            image_path: imagePathsJson, 
+            audio_path: audioPathsJson, 
             is_label_private: isLabelPrivate
         });
 
@@ -521,8 +513,6 @@ router.post('/label/:labelId/edit', isAuthenticated, upload.fields([
         res.status(500).send('An error occurred while updating the label.');
     }
 });
-
-
 
 router.post('/label/:labelId/delete', isAuthenticated, async (req, res) => {
     console.log('Delete label route hit');
@@ -553,9 +543,7 @@ router.post('/label/:labelId/delete', isAuthenticated, async (req, res) => {
         }
     }
 
-
     imagePaths = imagePaths.flat();
-
     
     if (existingLabel.audio_path) {
         try {
@@ -570,12 +558,9 @@ router.post('/label/:labelId/delete', isAuthenticated, async (req, res) => {
         } catch (error) {
             console.error('Failed to parse audio_path as JSON:', error);
         }
-    }
-
-   
+    }   
+    
     audioPaths = audioPaths.flat();
-
- 
     for (const imagePath of imagePaths) {
         if (typeof imagePath === 'string') {
             try {
@@ -599,7 +584,6 @@ router.post('/label/:labelId/delete', isAuthenticated, async (req, res) => {
             }
         }
     }
-
 
     const labelFilePattern = path.join(
         __dirname,
@@ -625,10 +609,6 @@ router.post('/label/:labelId/delete', isAuthenticated, async (req, res) => {
 
     res.redirect("/home");
 });
-
-
-
-
 
 router.post('/label/:labelId/delete-file', isAuthenticated, async (req, res) => {
 
@@ -694,8 +674,7 @@ router.post('/label/:labelId/delete-file', isAuthenticated, async (req, res) => 
             console.error(`Failed to delete file from file system: ${filePath}`, err);
         }
     }
-
-    
+ 
     const imagePathsJson = imagePaths.length > 0 ? JSON.stringify(imagePaths) : null;
     const audioPathsJson = audioPaths.length > 0 ? JSON.stringify(audioPaths) : null;
 
@@ -708,8 +687,6 @@ router.post('/label/:labelId/delete-file', isAuthenticated, async (req, res) => 
 
 });
 
-
-
 router.get('/share-labels', isAuthenticated, async (req, res) => {
 
 
@@ -718,7 +695,6 @@ router.get('/share-labels', isAuthenticated, async (req, res) => {
             errorMessage: ""
         });
 });
-
 
 router.post('/share-label', isAuthenticated, async (req, res) => {
     try {
@@ -732,8 +708,6 @@ router.post('/share-label', isAuthenticated, async (req, res) => {
                 errorMessage: 'User does not exist.'
             });
         }
-
-
 
         const [rows] = await moveout.getLabelIdByName(labelName, senderEmail);
         console.log('Rows returned by getLabelIdByName:', rows);
@@ -763,7 +737,6 @@ router.post('/share-label', isAuthenticated, async (req, res) => {
         res.status(500).send('An error occurred while sharing the label.');
     }
 });
-
 
 router.get('/inbox', isAuthenticated, async (req, res) => {
     try {
@@ -798,20 +771,6 @@ router.post('/discard-label', isAuthenticated, async (req, res) => {
     }
 });
 
-
-
-/* 
-Här fixa med overlayQRCoeOnImage så att den tar label namnet också sne så där inne hardcorda så att det står "share:"<namn>
-ändara ocks
-
-problem med att när man acceptar en label så kan man inte accepta dem igen för att de kommer ha samma namn, 
-kommer vara i databsen exempelvis med "shared: sharingV4" och namnet på labeln kommer bara vara sharingV4 inte shared: framför
-då det namnet uppdateras inte på frontend med "shared: "
-
-
-måste också testa vad som händer när ett orignellt namn som exmeplvis är 13 chars, ifall den delas 
-sedan läggs shared: till också kommer programmet att crasha då det går över 15 char limit
-*/
 router.post('/accept-label', isAuthenticated, async (req, res) => {
     try {
         const sharedId = req.body.shared_id; 
@@ -820,7 +779,6 @@ router.post('/accept-label', isAuthenticated, async (req, res) => {
         if (!sharedId) {
             throw new Error('Shared ID not found in the request.');
         }
-
 
         const result = await moveout.acceptSharedLabel(sharedId, recipientEmail);
         const newLabelId = result.newLabelId;
@@ -839,8 +797,6 @@ router.post('/accept-label', isAuthenticated, async (req, res) => {
     }
 });
 
-
-
 router.get('/print-label', isAuthenticated, async (req, res) => {
 
     res.render('pages/print-label.ejs', {
@@ -848,7 +804,6 @@ router.get('/print-label', isAuthenticated, async (req, res) => {
         errorMessage: ""
     });
 });
-
 
 router.get('/get-label', isAuthenticated, async (req, res) => {
     const labelName = req.query.name;
@@ -869,7 +824,6 @@ router.get('/get-label', isAuthenticated, async (req, res) => {
     }
 });
 
-
 router.get('/profile', isAuthenticated, async (req, res) => {
 
     const email = req.session.email;
@@ -878,8 +832,6 @@ router.get('/profile', isAuthenticated, async (req, res) => {
         email 
     });
 });
-
-
 
 router.post('/deactivate-account', isAuthenticated, async (req, res) => {
         const email = req.session.email; 
@@ -890,7 +842,6 @@ router.post('/deactivate-account', isAuthenticated, async (req, res) => {
             messageConfirmation
         });
 });
-
 
 router.post('/delete-account-request', isAuthenticated, async (req, res) => {
 
@@ -912,11 +863,6 @@ router.post('/delete-account-request', isAuthenticated, async (req, res) => {
 
 });
 
-
-/* 
-måste fixa coden som är ut kommenterad
-just nu så verkar console.loggen för token komma upp i flödet
-*/
 router.get('/confirm-delete-account', async (req, res) => {
     const { token } = req.query;
     const email = await moveout.verifyDeleteToken(token);
@@ -949,8 +895,6 @@ router.get('/confirm-delete-account', async (req, res) => {
     }
 });
 
-
-
 router.get('/admin-page', isAuthenticated, isAdmin, async (req, res) => {
 
     const users = await moveout.getUsersWithStorageData();
@@ -962,13 +906,11 @@ router.get('/admin-page', isAuthenticated, isAdmin, async (req, res) => {
 
 });
 
-
 router.post('/admin/toggle-activation', isAuthenticated, isAdmin, async (req, res) => {
     const { userEmail, isActive } = req.body; 
     await moveout.accountActivationToggle(userEmail, isActive === 'true');
     res.redirect('/admin-page');
 });
-
 
 router.post('/admin/send-email', isAuthenticated, isAdmin, async (req, res) => {
     const { subject, message } = req.body;
@@ -980,9 +922,6 @@ router.post('/admin/send-email', isAuthenticated, isAdmin, async (req, res) => {
 
 });
 
-/* 
-add is authenticated?
-*/
 router.post('/logout', (req, res) => {
     req.session.destroy(err => {
         if (err) {

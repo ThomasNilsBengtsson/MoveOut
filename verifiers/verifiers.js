@@ -26,14 +26,10 @@ function validatePassword(password) {
     return errors;
 }
 
-
-
-
 function verificationTokenCreation()
 {
     return crypto.randomBytes(32).toString("hex");
 }
-
 
 module.exports = {
     validateEmail,

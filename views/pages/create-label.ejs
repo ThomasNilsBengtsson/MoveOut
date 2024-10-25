@@ -316,10 +316,8 @@
       });
 
       if (response.ok) {
-        // Redirect to the URL provided by the response
         window.location.href = response.url;
       } else {
-        // Handle different types of errors based on the response status code
         const errorMessage = await response.text();
         if (response.status === 413) {
           document.getElementById("error-message").textContent =
@@ -332,7 +330,6 @@
         }
       }
     } catch (error) {
-      // Catch network or other unexpected errors
       document.getElementById("error-message").textContent =
         "An unexpected error occurred. Please try again later.";
     }
