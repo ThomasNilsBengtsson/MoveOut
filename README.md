@@ -3,7 +3,8 @@
 This project focused on developing an application that can help people when they are moving houses. The application focuses on allowing users to create labels that they can put on their moving boxes. On the application a user can input either text, images or audio with the purpose of for example showing/descriping what the box contains. Each label will have a unique QR-code that a user can scan, when scanned they will be able to see the content that they inserted “into” the label.
 
 
-![QR Code Image](https://drive.google.com/uc?export=view&id=143EuKLkbWkeikiwOTVi7kLW3J81EySia)
+![Application Image](./public/background-images/applicationImage.png)
+
 
 
 # How to Use
